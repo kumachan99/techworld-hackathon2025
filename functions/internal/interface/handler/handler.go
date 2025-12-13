@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
 	"github.com/techworld-hackathon/functions/internal/usecase"
 )
@@ -56,23 +57,38 @@ func NewHandler(
 // CreateRoomRequest は部屋作成リクエスト
 type CreateRoomRequest struct {
 	DisplayName string `json:"displayName"`
-	PhotoURL    string `json:"photoURL"`
 }
 
 // JoinRoomRequest は部屋参加リクエスト
 type JoinRoomRequest struct {
 	DisplayName string `json:"displayName"`
-	PhotoURL    string `json:"photoURL"`
+}
+
+// LeaveRoomRequest は部屋退出リクエスト
+type LeaveRoomRequest struct {
+	PlayerID string `json:"playerId"`
+}
+
+// ReadyRequest はReady状態トグルリクエスト
+type ReadyRequest struct {
+	PlayerID string `json:"playerId"`
+}
+
+// StartGameRequest はゲーム開始リクエスト
+type StartGameRequest struct {
+	PlayerID string `json:"playerId"`
 }
 
 // VoteRequest は投票リクエスト
 type VoteRequest struct {
+	PlayerID string `json:"playerId"`
 	PolicyID string `json:"policyId"`
 }
 
 // PetitionRequest は陳情リクエスト
 type PetitionRequest struct {
-	Text string `json:"text"`
+	PlayerID string `json:"playerId"`
+	Text     string `json:"text"`
 }
 
 // ============================================================================
@@ -84,13 +100,6 @@ type PetitionRequest struct {
 func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
 		return
 	}
 
@@ -106,10 +115,12 @@ func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// プレイヤーIDを生成
+	playerID := uuid.New().String()
+
 	output, err := h.createRoomUC.Execute(r.Context(), usecase.CreateRoomInput{
-		UserID:      userID,
+		UserID:      playerID,
 		DisplayName: req.DisplayName,
-		PhotoURL:    req.PhotoURL,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -117,8 +128,9 @@ func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"roomId": output.RoomID,
-		"status": output.Status,
+		"roomId":   output.RoomID,
+		"status":   output.Status,
+		"playerId": output.PlayerID,
 	})
 }
 
@@ -137,13 +149,6 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
-		return
-	}
-
 	// リクエストボディをパース
 	var req JoinRoomRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -156,11 +161,13 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// プレイヤーIDを生成
+	playerID := uuid.New().String()
+
 	output, err := h.joinRoomUC.Execute(r.Context(), usecase.JoinRoomInput{
 		RoomID:      roomID,
-		UserID:      userID,
+		UserID:      playerID,
 		DisplayName: req.DisplayName,
-		PhotoURL:    req.PhotoURL,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -168,7 +175,7 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"success": output.Success,
+		"playerId": output.PlayerID,
 	})
 }
 
@@ -187,16 +194,21 @@ func (h *Handler) LeaveRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
+	// リクエストボディをパース
+	var req LeaveRoomRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.PlayerID == "" {
+		respondError(w, http.StatusBadRequest, "playerId is required")
 		return
 	}
 
 	output, err := h.leaveRoomUC.Execute(r.Context(), usecase.LeaveRoomInput{
 		RoomID: roomID,
-		UserID: userID,
+		UserID: req.PlayerID,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -223,16 +235,21 @@ func (h *Handler) ToggleReady(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
+	// リクエストボディをパース
+	var req ReadyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.PlayerID == "" {
+		respondError(w, http.StatusBadRequest, "playerId is required")
 		return
 	}
 
 	output, err := h.toggleReadyUC.Execute(r.Context(), usecase.ToggleReadyInput{
 		RoomID: roomID,
-		UserID: userID,
+		UserID: req.PlayerID,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -259,16 +276,21 @@ func (h *Handler) StartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
+	// リクエストボディをパース
+	var req StartGameRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.PlayerID == "" {
+		respondError(w, http.StatusBadRequest, "playerId is required")
 		return
 	}
 
 	output, err := h.startGameUC.Execute(r.Context(), usecase.StartGameInput{
 		RoomID: roomID,
-		UserID: userID,
+		UserID: req.PlayerID,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -297,13 +319,6 @@ func (h *Handler) Vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
-		return
-	}
-
 	// リクエストボディをパース
 	var req VoteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -311,6 +326,10 @@ func (h *Handler) Vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.PlayerID == "" {
+		respondError(w, http.StatusBadRequest, "playerId is required")
+		return
+	}
 	if req.PolicyID == "" {
 		respondError(w, http.StatusBadRequest, "policyId is required")
 		return
@@ -318,7 +337,7 @@ func (h *Handler) Vote(w http.ResponseWriter, r *http.Request) {
 
 	output, err := h.voteUC.Execute(r.Context(), usecase.VoteInput{
 		RoomID:   roomID,
-		UserID:   userID,
+		UserID:   req.PlayerID,
 		PolicyID: req.PolicyID,
 	})
 	if err != nil {
@@ -333,6 +352,7 @@ func (h *Handler) Vote(w http.ResponseWriter, r *http.Request) {
 
 // ResolveVote は投票集計を処理する
 // POST /api/rooms/{roomId}/resolve
+// フロントエンドから全員投票完了時に自動でトリガーされる
 func (h *Handler) ResolveVote(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -346,16 +366,8 @@ func (h *Handler) ResolveVote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
-		return
-	}
-
 	output, err := h.resolveVoteUC.Execute(r.Context(), usecase.ResolveVoteInput{
 		RoomID: roomID,
-		UserID: userID,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -372,6 +384,7 @@ func (h *Handler) ResolveVote(w http.ResponseWriter, r *http.Request) {
 
 // NextTurn は次ターンへ進む
 // POST /api/rooms/{roomId}/next
+// フロントエンドから結果確認後に自動でトリガーされる
 func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -385,16 +398,8 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
-		return
-	}
-
 	output, err := h.nextTurnUC.Execute(r.Context(), usecase.NextTurnInput{
 		RoomID: roomID,
-		UserID: userID,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -429,21 +434,18 @@ func (h *Handler) SubmitPetition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.PlayerID == "" {
+		respondError(w, http.StatusBadRequest, "playerId is required")
+		return
+	}
 	if req.Text == "" {
 		respondError(w, http.StatusBadRequest, "text is required")
 		return
 	}
 
-	// ユーザーIDを取得
-	userID := getUserID(r)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "user ID is required")
-		return
-	}
-
 	output, err := h.submitPetitionUC.Execute(r.Context(), usecase.SubmitPetitionInput{
 		RoomID:       roomID,
-		PlayerID:     userID,
+		PlayerID:     req.PlayerID,
 		PetitionText: req.Text,
 	})
 	if err != nil {
@@ -461,22 +463,6 @@ func (h *Handler) SubmitPetition(w http.ResponseWriter, r *http.Request) {
 // ============================================================================
 // ユーティリティ関数
 // ============================================================================
-
-// getUserID はリクエストからユーザーIDを取得する
-// X-User-IDヘッダーまたはFirebase AuthのUIDを取得
-func getUserID(r *http.Request) string {
-	// 開発用: X-User-IDヘッダーから取得
-	if userID := r.Header.Get("X-User-ID"); userID != "" {
-		return userID
-	}
-	// 従来の X-Player-ID も互換性のためにサポート
-	if userID := r.Header.Get("X-Player-ID"); userID != "" {
-		return userID
-	}
-	// 本番環境ではFirebase Auth ミドルウェアで設定されたコンテキストから取得
-	// ここでは簡略化のためヘッダーから取得
-	return ""
-}
 
 // extractRoomID はURLパスからroomIdを抽出する
 // 例: /api/rooms/abc123/start → abc123
@@ -530,7 +516,7 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-User-ID, X-Player-ID")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }
@@ -546,7 +532,7 @@ func respondError(w http.ResponseWriter, status int, message string) {
 func HandleCORS(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-User-ID, X-Player-ID")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)

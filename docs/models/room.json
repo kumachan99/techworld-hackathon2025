@@ -28,6 +28,10 @@
     "policy_010",
     "policy_015"
   ],
+  "passedPolicyIds": [
+    "policy_002",
+    "policy_005"
+  ],
   "votes": {
     "user_abc123": "policy_003",
     "user_def456": "policy_007",

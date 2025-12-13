@@ -13,13 +13,13 @@ import (
 type CreateRoomInput struct {
 	UserID      string
 	DisplayName string
-	PhotoURL    string
 }
 
 // CreateRoomOutput は部屋作成の出力
 type CreateRoomOutput struct {
-	RoomID string
-	Status entity.RoomStatus
+	RoomID   string
+	Status   entity.RoomStatus
+	PlayerID string
 }
 
 // CreateRoomUseCase は部屋作成のユースケース
@@ -72,7 +72,6 @@ func (uc *CreateRoomUseCase) Execute(ctx context.Context, input CreateRoomInput)
 
 	// ホストプレイヤーを作成
 	player := entity.NewPlayer(input.DisplayName, true, &selectedIdeology)
-	player.PhotoURL = input.PhotoURL
 
 	// プレイヤーを保存
 	if err := uc.playerRepo.Create(ctx, roomID, input.UserID, player); err != nil {
@@ -86,7 +85,8 @@ func (uc *CreateRoomUseCase) Execute(ctx context.Context, input CreateRoomInput)
 	}
 
 	return &CreateRoomOutput{
-		RoomID: roomID,
-		Status: room.Status,
+		RoomID:   roomID,
+		Status:   room.Status,
+		PlayerID: input.UserID,
 	}, nil
 }

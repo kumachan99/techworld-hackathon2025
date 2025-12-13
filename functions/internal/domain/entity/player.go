@@ -8,7 +8,6 @@ package entity
 type Player struct {
 	// 🌐 公開情報
 	DisplayName    string `json:"displayName" firestore:"displayName"`
-	PhotoURL       string `json:"photoURL" firestore:"photoURL"`
 	IsHost         bool   `json:"isHost" firestore:"isHost"`
 	IsReady        bool   `json:"isReady" firestore:"isReady"`
 	IsPetitionUsed bool   `json:"isPetitionUsed" firestore:"isPetitionUsed"`
@@ -22,7 +21,6 @@ type Player struct {
 func NewPlayer(displayName string, isHost bool, ideology *MasterIdeology) *Player {
 	return &Player{
 		DisplayName:    displayName,
-		PhotoURL:       "",
 		IsHost:         isHost,
 		IsReady:        false,
 		IsPetitionUsed: false,

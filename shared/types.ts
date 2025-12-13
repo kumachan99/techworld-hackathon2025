@@ -83,6 +83,7 @@ export interface Room {
   isCollapsed: boolean;
   currentPolicyIds: string[];           // ★ IDのみ。マスターから引いて表示
   deckIds: string[];                    // 山札
+  passedPolicyIds: string[];            // 可決された政策の履歴
   votes: Record<string, string | null>; // { userId: policyId | null }
   lastResult: VoteResult | null;
 }
@@ -110,7 +111,6 @@ export interface VoteResult {
 export interface Player {
   // 🌐 公開情報
   displayName: string;
-  photoURL: string;
   isHost: boolean;
   isReady: boolean;
   isPetitionUsed: boolean;
@@ -123,7 +123,6 @@ export interface Player {
 /** プレイヤー公開情報（他プレイヤーが見れる部分） */
 export interface PlayerPublic {
   displayName: string;
-  photoURL: string;
   isHost: boolean;
   isReady: boolean;
   isPetitionUsed: boolean;
@@ -140,13 +139,13 @@ export interface PlayerPublic {
 /** 部屋作成リクエスト */
 export interface CreateRoomRequest {
   displayName: string;
-  photoURL?: string;
 }
 
 /** 部屋作成レスポンス */
 export interface CreateRoomResponse {
   roomId: string;
   status: RoomStatus;
+  playerId: string;
 }
 
 // -----------------------------------------------------------------------------
@@ -156,17 +155,21 @@ export interface CreateRoomResponse {
 /** 部屋参加リクエスト */
 export interface JoinRoomRequest {
   displayName: string;
-  photoURL?: string;
 }
 
 /** 部屋参加レスポンス */
 export interface JoinRoomResponse {
-  success: boolean;
+  playerId: string;
 }
 
 // -----------------------------------------------------------------------------
 // POST /api/rooms/{roomId}/leave - 部屋退出
 // -----------------------------------------------------------------------------
+
+/** 部屋退出リクエスト */
+export interface LeaveRoomRequest {
+  playerId: string;
+}
 
 /** 部屋退出レスポンス */
 export interface LeaveRoomResponse {
@@ -177,6 +180,11 @@ export interface LeaveRoomResponse {
 // POST /api/rooms/{roomId}/ready - Ready状態トグル
 // -----------------------------------------------------------------------------
 
+/** Ready状態リクエスト */
+export interface ReadyRequest {
+  playerId: string;
+}
+
 /** Ready状態レスポンス */
 export interface ReadyResponse {
   isReady: boolean;
@@ -185,6 +193,11 @@ export interface ReadyResponse {
 // -----------------------------------------------------------------------------
 // POST /api/rooms/{roomId}/start - ゲーム開始
 // -----------------------------------------------------------------------------
+
+/** ゲーム開始リクエスト */
+export interface StartGameRequest {
+  playerId: string;
+}
 
 /** ゲーム開始レスポンス */
 export interface StartGameResponse {
@@ -199,6 +212,7 @@ export interface StartGameResponse {
 
 /** 投票リクエスト */
 export interface VoteRequest {
+  playerId: string;
   policyId: string;
 }
 
@@ -235,6 +249,7 @@ export interface NextTurnResponse {
 
 /** 陳情リクエスト */
 export interface PetitionRequest {
+  playerId: string;
   text: string;
 }
 

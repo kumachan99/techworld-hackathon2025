@@ -27,6 +27,7 @@ type Room struct {
 	IsCollapsed      bool              `json:"isCollapsed" firestore:"isCollapsed"`
 	CurrentPolicyIDs []string          `json:"currentPolicyIds" firestore:"currentPolicyIds"` // IDのみ
 	DeckIDs          []string          `json:"deckIds" firestore:"deckIds"`                   // 山札
+	PassedPolicyIDs  []string          `json:"passedPolicyIds" firestore:"passedPolicyIds"`   // 可決された政策の履歴
 	Votes            map[string]string `json:"votes" firestore:"votes"`                       // { userId: policyId }
 	LastResult       *VoteResult       `json:"lastResult" firestore:"lastResult"`
 }
@@ -52,6 +53,7 @@ func NewRoom(hostID string) *Room {
 		IsCollapsed:      false,
 		CurrentPolicyIDs: make([]string, 0),
 		DeckIDs:          make([]string, 0),
+		PassedPolicyIDs:  make([]string, 0),
 		Votes:            make(map[string]string),
 		LastResult:       nil,
 	}

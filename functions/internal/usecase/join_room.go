@@ -14,12 +14,11 @@ type JoinRoomInput struct {
 	RoomID      string
 	UserID      string
 	DisplayName string
-	PhotoURL    string
 }
 
 // JoinRoomOutput は部屋参加の出力
 type JoinRoomOutput struct {
-	Success bool
+	PlayerID string
 }
 
 // JoinRoomUseCase は部屋参加のユースケース
@@ -112,7 +111,6 @@ func (uc *JoinRoomUseCase) Execute(ctx context.Context, input JoinRoomInput) (*J
 
 	// プレイヤーを作成
 	player := entity.NewPlayer(input.DisplayName, false, &selectedIdeology)
-	player.PhotoURL = input.PhotoURL
 
 	// プレイヤーを保存
 	if err := uc.playerRepo.Create(ctx, input.RoomID, input.UserID, player); err != nil {
@@ -126,6 +124,6 @@ func (uc *JoinRoomUseCase) Execute(ctx context.Context, input JoinRoomInput) (*J
 	}
 
 	return &JoinRoomOutput{
-		Success: true,
+		PlayerID: input.UserID,
 	}, nil
 }

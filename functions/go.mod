@@ -5,6 +5,7 @@ go 1.21
 require (
 	cloud.google.com/go/firestore v1.14.0
 	firebase.google.com/go/v4 v4.13.0
+	github.com/google/uuid v1.4.0
 	github.com/sashabaranov/go-openai v1.17.9
 	google.golang.org/grpc v1.59.0
 )
@@ -21,7 +22,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
-	github.com/google/uuid v1.4.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	go.opencensus.io v0.24.0 // indirect

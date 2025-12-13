@@ -120,10 +120,9 @@ curl http://127.0.0.1:8081/health
 ### 部屋作成 API
 
 ```bash
-# ローカル開発時はX-User-IDヘッダーを使用
+# playerIdはバックエンドで自動生成される
 curl -X POST "http://127.0.0.1:8081/api/rooms" \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: user123" \
   -d '{
     "displayName": "ホスト太郎"
   }'
@@ -133,16 +132,17 @@ curl -X POST "http://127.0.0.1:8081/api/rooms" \
 ```json
 {
   "roomId": "abc123xyz",
-  "status": "LOBBY"
+  "status": "LOBBY",
+  "playerId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
 ### 部屋参加 API
 
 ```bash
+# playerIdはバックエンドで自動生成される
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/join" \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: user456" \
   -d '{
     "displayName": "プレイヤー花子"
   }'
@@ -151,7 +151,7 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/join" \
 レスポンス例:
 ```json
 {
-  "success": true
+  "playerId": "550e8400-e29b-41d4-a716-446655440001"
 }
 ```
 
@@ -160,7 +160,9 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/join" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/ready" \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: user456"
+  -d '{
+    "playerId": "user456"
+  }'
 ```
 
 レスポンス例:
@@ -176,7 +178,9 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/ready" \
 # ホストのみ実行可能
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/start" \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: user123"
+  -d '{
+    "playerId": "user123"
+  }'
 ```
 
 レスポンス例:
@@ -193,8 +197,8 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/start" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: user123" \
   -d '{
+    "playerId": "user123",
     "policyId": "policy_001"
   }'
 ```
@@ -209,10 +213,9 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
 ### 投票集計 API
 
 ```bash
-# ホストのみ実行可能
+# フロントエンドから全員投票完了時に自動でトリガー
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/resolve" \
-  -H "Content-Type: application/json" \
-  -H "X-User-ID: user123"
+  -H "Content-Type: application/json"
 ```
 
 レスポンス例:
@@ -241,10 +244,9 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/resolve" \
 ### 次ターン API
 
 ```bash
-# ホストのみ実行可能
+# フロントエンドから結果確認後に自動でトリガー
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/next" \
-  -H "Content-Type: application/json" \
-  -H "X-User-ID: user123"
+  -H "Content-Type: application/json"
 ```
 
 レスポンス例:
@@ -260,8 +262,8 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/next" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/petition" \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: user123" \
   -d '{
+    "playerId": "user123",
     "text": "週休3日制を導入したい"
   }'
 ```
@@ -277,32 +279,31 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/petition" \
 
 ---
 
-## ローカルでの認証（開発用）
+## プレイヤーIDについて
 
-### 簡易認証（X-User-IDヘッダー）
+このシステムでは Firebase Authentication を使用せず、シンプルな UUID ベースの識別を採用しています。
 
-ローカル開発時は、`X-User-ID` ヘッダーにユーザーIDを指定することで認証をバイパスできます。
-
-```bash
-curl -X POST "http://127.0.0.1:8081/api/rooms" \
-  -H "Content-Type: application/json" \
-  -H "X-User-ID: test-user-001" \
-  -d '{"displayName": "テストユーザー"}'
-```
-
-### Firebase Authentication（本番環境）
-
-Firebase Authentication のIDトークンを取得するには:
+- `playerId` は部屋作成・参加時にバックエンドで自動生成される
+- フロントエンドはレスポンスで受け取った `playerId` を localStorage に保存
+- 以降のAPIリクエスト（ready, vote, petition等）ではリクエストボディに `playerId` を含める
 
 ```typescript
-import { getAuth } from 'firebase/auth';
+// フロントエンドでのplayerId管理例
+// 部屋作成時
+const response = await fetch('/api/rooms', {
+  method: 'POST',
+  body: JSON.stringify({ displayName: 'プレイヤー名' })
+});
+const { roomId, playerId } = await response.json();
+localStorage.setItem('playerId', playerId);
 
-const auth = getAuth();
-const token = await auth.currentUser?.getIdToken();
-console.log(token);
+// 以降のリクエスト
+const playerId = localStorage.getItem('playerId');
+await fetch(`/api/rooms/${roomId}/vote`, {
+  method: 'POST',
+  body: JSON.stringify({ playerId, policyId: 'policy_001' })
+});
 ```
-
-または、Firebase Emulator UI (http://127.0.0.1:4040) から認証をセットアップできます。
 
 ---
 
@@ -344,13 +345,3 @@ echo $FIRESTORE_EMULATOR_HOST  # => 127.0.0.1:8080
 echo $GOOGLE_CLOUD_PROJECT     # => demo-project
 ```
 
-### 認証エラー
-
-ローカル開発時は、Firebase Emulator を使用するか、テスト用に認証をバイパスする設定が必要です。
-
-```go
-// 開発環境での認証スキップ例
-if os.Getenv("SKIP_AUTH") == "true" {
-    // 認証をスキップ
-}
-```

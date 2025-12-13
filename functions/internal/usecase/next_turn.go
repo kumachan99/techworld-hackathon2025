@@ -10,7 +10,6 @@ import (
 // NextTurnInput は次ターンの入力
 type NextTurnInput struct {
 	RoomID string
-	UserID string // ホストチェック用
 }
 
 // NextTurnOutput は次ターンの出力
@@ -38,12 +37,12 @@ func NewNextTurnUseCase(
 }
 
 // Execute は次のターンに進める
-// 1. リクエスト者がホストであることを確認
-// 2. RESULT状態であることを確認
-// 3. turnをインクリメント
-// 4. statusをVOTINGに
-// 5. 次の3枚の政策をセット
-// 6. votesをリセット
+// フロントエンドから自動でトリガーされる（ホストチェックなし）
+// 1. RESULT状態であることを確認
+// 2. turnをインクリメント
+// 3. statusをVOTINGに
+// 4. 次の3枚の政策をセット
+// 5. votesをリセット
 func (uc *NextTurnUseCase) Execute(ctx context.Context, input NextTurnInput) (*NextTurnOutput, error) {
 	// 部屋を取得
 	room, err := uc.roomRepo.FindByID(ctx, input.RoomID)
@@ -52,11 +51,6 @@ func (uc *NextTurnUseCase) Execute(ctx context.Context, input NextTurnInput) (*N
 	}
 	if room == nil {
 		return nil, entity.ErrRoomNotFound
-	}
-
-	// ホストチェック
-	if room.HostID != input.UserID {
-		return nil, entity.ErrNotHost
 	}
 
 	// RESULT状態でないと次ターンに進めない

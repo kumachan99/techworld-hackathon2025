@@ -96,6 +96,7 @@ ROOT
 | isCollapsed | boolean | 街崩壊フラグ |
 | currentPolicyIds | array | 提示中の政策ID（3つ） |
 | deckIds | array | 山札（残りの政策ID） |
+| passedPolicyIds | array | 可決された政策IDの履歴 |
 | votes | map | 投票状況 `{ userId: policyId }` |
 | lastResult | map / null | 前回の結果（RESULT時のみ） |
 
@@ -109,7 +110,6 @@ ROOT
 |-----------|-----|---------|------|
 | (userId) | string | 🌐 公開 | ドキュメントID（Firebase Auth UID） |
 | displayName | string | 🌐 公開 | 表示名 |
-| photoURL | string | 🌐 公開 | アイコンURL |
 | isHost | boolean | 🌐 公開 | ホストか |
 | isReady | boolean | 🌐 公開 | 準備完了か |
 | isPetitionUsed | boolean | 🌐 公開 | 陳情権使用済みか |
@@ -140,7 +140,8 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 ### 共通仕様
 
 - **ベースURL:** `/api`
-- **認証:** Firebase Authentication（Bearer Token）
+- **認証:** なし（playerIdによる識別）
+- **playerId:** 部屋作成・参加時にバックエンドで生成。以降のリクエストで使用
 - **エラーレスポンス:**
   ```json
   {
@@ -159,24 +160,27 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 **リクエスト:**
 ```json
 {
-  "displayName": "プレイヤー名",
-  "photoURL": "https://..."  // optional
+  "displayName": "プレイヤー名"
 }
 ```
 
 **処理:**
-1. 新しい roomId を生成
-2. Room ドキュメントを作成（初期値設定）
-3. ホストを players サブコレクションに追加
-4. 思想をランダムに割り当て
+1. playerId（UUID）を生成
+2. 新しい roomId を生成
+3. Room ドキュメントを作成（初期値設定）
+4. ホストを players サブコレクションに追加
+5. 思想をランダムに割り当て
 
 **レスポンス:**
 ```json
 {
   "roomId": "abc123",
-  "status": "LOBBY"
+  "status": "LOBBY",
+  "playerId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
+
+> フロントエンドは受け取った `playerId` を localStorage に保存し、以降のリクエストで使用する
 
 ---
 
@@ -187,24 +191,26 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 **リクエスト:**
 ```json
 {
-  "displayName": "プレイヤー名",
-  "photoURL": "https://..."  // optional
+  "displayName": "プレイヤー名"
 }
 ```
 
 **処理:**
-1. ルームの存在・状態確認（LOBBY のみ参加可）
-2. 既に参加済みでないか確認
-3. 未使用の思想からランダムに割り当て
-4. プレイヤーを追加
-5. votes に追加
+1. playerId（UUID）を生成
+2. ルームの存在・状態確認（LOBBY のみ参加可）
+3. 既に参加済みでないか確認
+4. 未使用の思想からランダムに割り当て
+5. プレイヤーを追加
+6. votes に追加
 
 **レスポンス:**
 ```json
 {
-  "success": true
+  "playerId": "550e8400-e29b-41d4-a716-446655440001"
 }
 ```
+
+> フロントエンドは受け取った `playerId` を localStorage に保存し、以降のリクエストで使用する
 
 **エラー:**
 - `404`: ルームが存在しない
@@ -218,7 +224,12 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 
 ルームから退出する。
 
-**リクエスト:** なし
+**リクエスト:**
+```json
+{
+  "playerId": "uuid-xxx"
+}
+```
 
 **処理:**
 1. プレイヤーを削除
@@ -240,11 +251,16 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 
 準備完了状態を切り替える。
 
-**リクエスト:** なし
+**リクエスト:**
+```json
+{
+  "playerId": "uuid-xxx"
+}
+```
 
 **処理:**
 1. LOBBY 状態であることを確認
-2. `isReady` をトグル
+2. 該当プレイヤーの `isReady` をトグル
 
 **レスポンス:**
 ```json
@@ -259,7 +275,12 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 
 ゲームを開始する（ホストのみ）。
 
-**リクエスト:** なし
+**リクエスト:**
+```json
+{
+  "playerId": "uuid-xxx"
+}
+```
 
 **処理:**
 1. リクエスト者がホストであることを確認
@@ -291,6 +312,7 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 **リクエスト:**
 ```json
 {
+  "playerId": "uuid-xxx",
   "policyId": "policy_001"
 }
 ```
@@ -298,7 +320,7 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 **処理:**
 1. VOTING 状態であることを確認
 2. 有効な政策IDであることを確認（currentPolicyIds に含まれる）
-3. プレイヤーの `currentVote` を更新
+3. 該当プレイヤーの `currentVote` を更新
 4. Room の `votes` を更新
 
 **レスポンス:**
@@ -312,14 +334,13 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 
 #### POST `/api/rooms/{roomId}/resolve` - 投票集計
 
-投票を集計し結果を反映する（ホストのみ）。
+投票を集計し結果を反映する。フロントで全員投票完了を検知したら呼び出す。
 
-**リクエスト:** なし
+**リクエスト:** なし（空のJSON `{}` を送信）
 
 **処理:**
-1. リクエスト者がホストであることを確認
-2. VOTING 状態であることを確認
-3. 全員が投票済みであることを確認
+1. VOTING 状態であることを確認
+2. 全員が投票済みであることを確認
 4. `votes` を集計して最多得票の政策を決定（同数はランダム）
 5. `master_policies` から `effects` を取得
 6. `cityParams` に効果を適用
@@ -352,15 +373,14 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 
 #### POST `/api/rooms/{roomId}/next` - 次ターンへ
 
-結果発表後、次のターンに進む（ホストのみ）。
+結果発表後、次のターンに進む。フロントで結果表示後に呼び出す。
 
-**リクエスト:** なし
+**リクエスト:** なし（空のJSON `{}` を送信）
 
 **処理:**
-1. リクエスト者がホストであることを確認
-2. RESULT 状態であることを確認
-3. `turn` をインクリメント
-4. `status` を `VOTING` に
+1. RESULT 状態であることを確認
+2. `turn` をインクリメント
+3. `status` を `VOTING` に
 
 **レスポンス:**
 ```json
@@ -379,12 +399,13 @@ AIに新しい政策を提案する（1人1回）。
 **リクエスト:**
 ```json
 {
+  "playerId": "uuid-xxx",
   "text": "週休3日制を導入したい"
 }
 ```
 
 **処理:**
-1. プレイヤーの `isPetitionUsed` を確認
+1. 該当プレイヤーの `isPetitionUsed` を確認
 2. OpenAI API で審査
 3. 承認なら政策カードを生成し `deckIds` に追加
 4. `isPetitionUsed` を `true` に
@@ -430,14 +451,14 @@ async function apiCall<T>(
 
 // 部屋作成
 export const createRoom = (displayName: string) =>
-  apiCall<{ roomId: string }>('/api/rooms', {
+  apiCall<{ roomId: string; status: string; playerId: string }>('/api/rooms', {
     method: 'POST',
     body: JSON.stringify({ displayName }),
   });
 
 // 部屋参加
 export const joinRoom = (roomId: string, displayName: string) =>
-  apiCall<{ success: boolean }>(`/api/rooms/${roomId}/join`, {
+  apiCall<{ playerId: string }>(`/api/rooms/${roomId}/join`, {
     method: 'POST',
     body: JSON.stringify({ displayName }),
   });

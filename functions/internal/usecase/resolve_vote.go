@@ -12,7 +12,6 @@ import (
 // ResolveVoteInput は投票集計の入力
 type ResolveVoteInput struct {
 	RoomID string
-	UserID string // ホストチェック用
 }
 
 // ResolveVoteOutput は投票集計の出力
@@ -65,11 +64,6 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 		return nil, entity.ErrRoomNotFound
 	}
 
-	// ホストチェック
-	if room.HostID != input.UserID {
-		return nil, entity.ErrNotHost
-	}
-
 	// VOTING状態でないと集計できない
 	if room.Status != entity.RoomStatusVoting {
 		return nil, entity.ErrInvalidPhase
@@ -109,6 +103,9 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 		NewsFlash:         winningPolicy.NewsFlash,
 		VoteDetails:       room.Votes,
 	}
+
+	// 可決された政策を履歴に追加
+	room.PassedPolicyIDs = append(room.PassedPolicyIDs, winningPolicy.PolicyID)
 
 	// 結果発表フェーズに移行
 	room.Status = entity.RoomStatusResult

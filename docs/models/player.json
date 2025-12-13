@@ -3,10 +3,8 @@
   "_description": "プレイヤー（サブコレクション）",
 
   "displayName": "Alice",
-  "photoURL": "https://example.com/avatar.png",
   "isHost": false,
   "isReady": true,
-  "hasVoted": true,
   "isPetitionUsed": false,
 
   "_comment_secret": "以下は本人のみ読み取り可（Security Rulesで制御）",
