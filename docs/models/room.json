@@ -1,0 +1,54 @@
+{
+  "_path": "rooms/{roomId}",
+  "_description": "ゲームルーム",
+
+  "hostId": "user_abc123",
+  "status": "VOTING",
+  "turn": 3,
+  "maxTurns": 10,
+  "createdAt": "2024-01-15T10:30:00Z",
+  "cityParams": {
+    "economy": 55,
+    "welfare": 45,
+    "education": 60,
+    "environment": 40,
+    "security": 50,
+    "humanRights": 50
+  },
+  "isCollapsed": false,
+  "currentPolicyIds": [
+    "policy_003",
+    "policy_007",
+    "policy_012"
+  ],
+  "deckIds": [
+    "policy_001",
+    "policy_004",
+    "policy_008",
+    "policy_010",
+    "policy_015"
+  ],
+  "votes": {
+    "user_abc123": "policy_003",
+    "user_def456": "policy_007",
+    "user_ghi789": ""
+  },
+  "lastResult": {
+    "passedPolicyId": "policy_005",
+    "passedPolicyTitle": "教育無償化",
+    "actualEffects": {
+      "economy": -15,
+      "welfare": 10,
+      "education": 30,
+      "environment": 0,
+      "security": 0,
+      "humanRights": 0
+    },
+    "newsFlash": "【朗報】教育無償化で進学率過去最高に！予算超過で他施策に影響も",
+    "voteDetails": {
+      "user_abc123": "policy_005",
+      "user_def456": "policy_005",
+      "user_ghi789": "policy_002"
+    }
+  }
+}

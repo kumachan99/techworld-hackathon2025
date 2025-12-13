@@ -1,0 +1,138 @@
+sequenceDiagram
+    participant Host as ホスト
+    participant Player as 他プレイヤー
+    participant FE as Frontend
+    participant FS as Firestore
+    participant CR as Cloud Run
+    participant AI as OpenAI
+
+    Note over Host,AI: PHASE 1: ロビー (LOBBY)
+
+    Host->>FE: 部屋作成ボタン
+    FE->>FS: setDoc(rooms/{roomId})<br/>{ status: LOBBY, hostId, turn: 0, ... }
+    FS-->>FE: 完了
+    FE-->>Host: 部屋ID表示
+
+    Host->>FE: 自分をプレイヤーとして登録
+    FE->>FS: setDoc(rooms/{roomId}/players/{hostId})<br/>{ displayName, ideology, isHost: true, isReady: false }
+    FS-->>FE: 完了
+
+    Player->>FE: 部屋IDを入力して参加
+    FE->>FS: setDoc(rooms/{roomId}/players/{oderId})<br/>{ displayName, ideology, isHost: false, isReady: false }
+    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{oderId}: null }
+    FS-->>FE: 完了
+
+    FE->>FS: onSnapshot(rooms/{roomId})
+    FE->>FS: onSnapshot(rooms/{roomId}/players)
+    FS-->>FE: リアルタイム監視開始
+    FE-->>Host: プレイヤー一覧更新
+    FE-->>Player: プレイヤー一覧更新
+
+    Player->>FE: Ready ボタン
+    FE->>FS: updateDoc(players/{oderId})<br/>{ isReady: true }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: Player が Ready になった
+    FE-->>Player: Ready状態反映
+
+    Host->>FE: Ready ボタン
+    FE->>FS: updateDoc(players/{hostId})<br/>{ isReady: true }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: 全員Ready → 開始ボタン有効化
+    FE-->>Player: Host が Ready になった
+
+    Note over Host,AI: PHASE 2: ゲーム開始
+
+    Host->>FE: ゲーム開始ボタン
+    FE->>CR: POST /api/rooms/{roomId}/start
+    CR->>FS: 全政策ID取得 (master_policies)
+    FS-->>CR: 政策IDリスト
+    Note over CR: シャッフル & デッキ作成<br/>votes 初期化<br/>hasVoted リセット
+    CR->>FS: updateDoc(rooms/{roomId})<br/>{ status: VOTING, turn: 1,<br/>currentPolicyIds, deckIds, votes }
+    CR->>FS: 全プレイヤーの hasVoted を false に
+    FS-->>CR: 完了
+    CR-->>FE: { status, turn, currentPolicyIds }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: 投票画面へ遷移
+    FE-->>Player: 投票画面へ遷移
+
+    Note over Host,AI: PHASE 3: 投票 (VOTING)
+
+    FE->>FS: getDoc(master_policies/{id}) × 3
+    FS-->>FE: 政策カード情報<br/>※ effects はフロント側で非表示
+    FE-->>Host: 3つの政策カード表示
+    FE-->>Player: 3つの政策カード表示
+
+    Player->>FE: 政策Aに投票
+    FE->>FS: updateDoc(players/{oderId})<br/>{ currentVote: A, hasVoted: true }
+    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{oderId}: A }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: Player が投票完了
+    FE-->>Player: 投票完了表示
+
+    Host->>FE: 政策Bに投票
+    FE->>FS: updateDoc(players/{hostId})<br/>{ currentVote: B, hasVoted: true }
+    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{hostId}: B }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: 全員投票完了
+    FE-->>Player: Host が投票完了
+
+    opt AI陳情（1回のみ使用可）
+        Player->>FE: 陳情ボタン
+        FE->>CR: POST /api/rooms/{roomId}/petitions<br/>{ text: "週休3日制を導入したい" }
+        CR->>FS: isPetitionUsed 確認
+        FS-->>CR: false
+        CR->>AI: 陳情テキスト審査
+        AI-->>CR: { approved, policy }
+        alt 承認時
+            CR->>FS: master_policies.add(newPolicy)
+            CR->>FS: rooms/{roomId}.deckIds.push(newPolicyId)
+            CR->>FS: players/{oderId}.isPetitionUsed = true
+            CR-->>FE: { approved: true, policyId, message }
+            FE-->>Player: 陳情承認！
+        else 却下時
+            CR-->>FE: { approved: false, reason }
+            FE-->>Player: 陳情却下...
+        end
+    end
+
+    Note over Host,AI: PHASE 4: 投票集計 (→ RESULT)
+
+    Note over FE: 全員投票完了を検知<br/>(全員の hasVoted が true)
+    FE->>CR: POST /api/rooms/{roomId}/resolve
+    CR->>FS: rooms/{roomId} 取得
+    FS-->>CR: 部屋データ (votes含む)
+    Note over CR: 投票集計: A=1票, B=1票<br/>同数の場合ランダム決定
+    CR->>FS: master_policies/{winningId} 取得
+    FS-->>CR: 政策データ (effects含む)
+    Note over CR: cityParams に効果適用<br/>崩壊チェック<br/>次の3枚を準備<br/>votes, hasVoted リセット
+    CR->>FS: updateDoc(rooms/{roomId})<br/>{ status: RESULT, lastResult,<br/>cityParams, currentPolicyIds,<br/>votes: リセット済み }
+    CR->>FS: 全プレイヤーの hasVoted, currentVote をリセット
+    FS-->>CR: 完了
+    CR-->>FE: { lastResult, cityParams, isGameOver }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: 結果画面表示<br/>「政策Aが可決！」<br/>効果: economy +10
+    FE-->>Player: 結果画面表示<br/>「政策Aが可決！」<br/>効果: economy +10
+
+    Note over Host,AI: PHASE 5: 次ターン (RESULT → VOTING)
+
+    Host->>FE: 次のターンへボタン
+    FE->>FS: updateDoc(rooms/{roomId})<br/>{ status: VOTING, turn: increment(1) }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: 投票画面へ遷移
+    FE-->>Player: 投票画面へ遷移
+
+    Note over Host,AI: ↑ PHASE 3〜5 を繰り返し<br/>(turn が maxTurns に達するまで)
+
+    Note over Host,AI: PHASE 6: ゲーム終了 (FINISHED)
+
+    Note over CR: /resolve 時に自動判定<br/>turn >= maxTurns or isCollapsed
+    CR->>FS: { status: FINISHED }
+    FS-->>FE: onSnapshot通知
+    FE-->>Host: 結果画面へ遷移
+    FE-->>Player: 結果画面へ遷移
+
+    FE->>FS: 全プレイヤーの ideology 取得
+    FS-->>FE: ideology.coefficients
+    Note over FE: 最終スコア計算<br/>Σ(coefficients × cityParams)
+    FE-->>Host: ランキング表示<br/>1位: Player (120点)<br/>2位: Host (95点)<br/>※ 全員の思想が公開される
+    FE-->>Player: ランキング表示<br/>1位: Player (120点)<br/>2位: Host (95点)<br/>※ 全員の思想が公開される

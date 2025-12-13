@@ -1,0 +1,18 @@
+{
+  "_path": "master_ideologies/{ideologyId}",
+  "_description": "思想マスター",
+
+  "id": "ideology_environmentalist",
+  "name": "環境主義者",
+  "description": "自然環境の保護を最優先とする思想。環境パラメータが高いほど高得点。",
+
+  "_comment_coefficients": "最終スコア = Σ(cityParams × coefficients)",
+  "coefficients": {
+    "economy": 0.5,
+    "welfare": 1.0,
+    "education": 1.0,
+    "environment": 2.0,
+    "security": 0.5,
+    "humanRights": 1.0
+  }
+}

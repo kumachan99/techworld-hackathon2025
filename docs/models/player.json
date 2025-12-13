@@ -1,0 +1,27 @@
+{
+  "_path": "rooms/{roomId}/players/{userId}",
+  "_description": "プレイヤー（サブコレクション）",
+
+  "displayName": "Alice",
+  "photoURL": "https://example.com/avatar.png",
+  "isHost": false,
+  "isReady": true,
+  "hasVoted": true,
+  "isPetitionUsed": false,
+
+  "_comment_secret": "以下は本人のみ読み取り可（Security Rulesで制御）",
+  "ideology": {
+    "id": "ideology_environmentalist",
+    "name": "環境主義者",
+    "description": "自然環境の保護を最優先とする思想",
+    "coefficients": {
+      "economy": 0.5,
+      "welfare": 1.0,
+      "education": 1.0,
+      "environment": 2.0,
+      "security": 0.5,
+      "humanRights": 1.0
+    }
+  },
+  "currentVote": "policy_003"
+}
