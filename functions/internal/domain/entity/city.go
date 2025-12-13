@@ -11,15 +11,17 @@ type CityParams struct {
 	HumanRights int `json:"humanRights" firestore:"humanRights"` // 人権
 }
 
-// NewCityParams は初期状態の街パラメータを作成する（各パラメータ50）
+// NewCityParams は初期状態の街パラメータを作成する（各パラメータ35：発展途上の街からスタート）
+// 35からスタートすることで、政策の効果による変動幅が広がり、
+// 画像生成時に街の変化がより顕著に表現される
 func NewCityParams() CityParams {
 	return CityParams{
-		Economy:     50,
-		Welfare:     50,
-		Education:   50,
-		Environment: 50,
-		Security:    50,
-		HumanRights: 50,
+		Economy:     35,
+		Welfare:     35,
+		Education:   35,
+		Environment: 35,
+		Security:    35,
+		HumanRights: 35,
 	}
 }
 

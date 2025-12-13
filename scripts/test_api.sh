@@ -1,10 +1,16 @@
 #!/bin/bash
 # API テストスクリプト
 # 使用方法: ./scripts/test_api.sh
+# 本番環境: API_BASE=https://game-api-936357358706.asia-northeast1.run.app/api SAVE_IMAGE=true ./scripts/test_api.sh
+
+# オプション
+# 本番環境: API_BASE=https://game-api-xxxxx.run.app/api ./scripts/test_api.sh
+# 画像保存: SAVE_IMAGE=true ./scripts/test_api.sh
 
 set -e
 
-API_BASE="http://localhost:8081/api"
+API_BASE="${API_BASE:-http://localhost:8081/api}"
+echo "API_BASE: $API_BASE"
 
 # 色付き出力
 RED='\033[0;31m'
@@ -72,16 +78,39 @@ else
 fi
 
 # =====================================
-# 3. Ready状態トグル (ゲスト)
+# 3. Ready状態トグル (両プレイヤー)
 # =====================================
 print_step "3. Ready状態トグル (POST /api/rooms/{roomId}/ready)"
 
+# ゲストをReadyに
 RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/ready" \
     -H "Content-Type: application/json" \
     -d "{\"playerId\": \"${GUEST_ID}\"}")
 
+IS_READY=$(echo "$RESPONSE" | jq -r '.isReady')
+if [ "$IS_READY" != "true" ]; then
+    # もう一度トグル
+    RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/ready" \
+        -H "Content-Type: application/json" \
+        -d "{\"playerId\": \"${GUEST_ID}\"}")
+fi
 echo "$RESPONSE" | jq .
-print_success "Ready状態をトグルしました"
+print_success "ゲストがReadyになりました"
+
+# ホストをReadyに (ホストは自動的にReadyになっていない場合)
+RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/ready" \
+    -H "Content-Type: application/json" \
+    -d "{\"playerId\": \"${HOST_ID}\"}")
+
+IS_READY=$(echo "$RESPONSE" | jq -r '.isReady')
+if [ "$IS_READY" != "true" ]; then
+    # もう一度トグル
+    RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/ready" \
+        -H "Content-Type: application/json" \
+        -d "{\"playerId\": \"${HOST_ID}\"}")
+fi
+echo "$RESPONSE" | jq .
+print_success "ホストがReadyになりました"
 
 # =====================================
 # 4. ゲーム開始
@@ -123,7 +152,7 @@ echo "$RESPONSE" | jq .
 print_success "ホストが投票しました: policyId=$FIRST_POLICY"
 
 # =====================================
-# 6. 投票 (ゲスト)
+# 6. 投票 (ゲスト) - 全員投票で自動resolveされ、画像生成される
 # =====================================
 print_step "6. 投票 - ゲスト (POST /api/rooms/{roomId}/vote)"
 
@@ -131,28 +160,55 @@ RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/vote" \
     -H "Content-Type: application/json" \
     -d "{\"playerId\": \"${GUEST_ID}\", \"policyId\": \"${FIRST_POLICY}\"}")
 
-echo "$RESPONSE" | jq .
+# 画像以外を表示
+echo "$RESPONSE" | jq 'del(.lastResult.cityImage)'
 print_success "ゲストが投票しました: policyId=$FIRST_POLICY"
 
+# 自動resolveされたか確認
+IS_RESOLVED=$(echo "$RESPONSE" | jq -r '.isResolved')
+if [ "$IS_RESOLVED" = "true" ]; then
+    print_success "自動resolveされました"
+
+    # 画像が生成されたか確認
+    CITY_IMAGE=$(echo "$RESPONSE" | jq -r '.lastResult.cityImage // empty')
+    if [ -n "$CITY_IMAGE" ]; then
+        IMAGE_LENGTH=${#CITY_IMAGE}
+        print_success "街の画像が生成されました (Base64: ${IMAGE_LENGTH} 文字)"
+
+        # 画像をファイルに保存（オプション）
+        if [ "$SAVE_IMAGE" = "true" ]; then
+            echo "$CITY_IMAGE" | base64 -d > "city_image_turn1.png"
+            print_success "画像を city_image_turn1.png に保存しました"
+        fi
+    else
+        print_error "街の画像が生成されませんでした"
+    fi
+fi
+
 # =====================================
-# 7. 投票集計
+# 7. 投票集計（自動resolveされていない場合のみ）
 # =====================================
-print_step "7. 投票集計 (POST /api/rooms/{roomId}/resolve)"
+if [ "$IS_RESOLVED" != "true" ]; then
+    print_step "7. 投票集計 (POST /api/rooms/{roomId}/resolve)"
 
-RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/resolve" \
-    -H "Content-Type: application/json" \
-    -d '{}')
+    RESPONSE=$(curl -s -X POST "${API_BASE}/rooms/${ROOM_ID}/resolve" \
+        -H "Content-Type: application/json" \
+        -d '{}')
 
-echo "$RESPONSE" | jq .
+    echo "$RESPONSE" | jq .
 
-STATUS=$(echo "$RESPONSE" | jq -r '.status')
-PASSED_POLICY=$(echo "$RESPONSE" | jq -r '.lastResult.passedPolicyTitle')
+    STATUS=$(echo "$RESPONSE" | jq -r '.status')
+    PASSED_POLICY=$(echo "$RESPONSE" | jq -r '.lastResult.passedPolicyTitle')
 
-if [ "$STATUS" = "RESULT" ] || [ "$STATUS" = "FINISHED" ]; then
-    print_success "投票集計成功: 可決=$PASSED_POLICY"
+    if [ "$STATUS" = "RESULT" ] || [ "$STATUS" = "FINISHED" ]; then
+        print_success "投票集計成功: 可決=$PASSED_POLICY"
+    else
+        print_error "投票集計失敗"
+        exit 1
+    fi
 else
-    print_error "投票集計失敗"
-    exit 1
+    print_step "7. 投票集計 (スキップ: 自動resolveされました)"
+    STATUS=$(echo "$RESPONSE" | jq -r '.status')
 fi
 
 # =====================================
