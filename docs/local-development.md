@@ -194,6 +194,8 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/start" \
 
 ### 投票 API
 
+**全員投票完了時は自動で投票集計（resolve）を実行します。**
+
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
   -H "Content-Type: application/json" \
@@ -203,17 +205,45 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
   }'
 ```
 
-レスポンス例:
+レスポンス例（全員投票完了前）:
 ```json
 {
-  "success": true
+  "success": true,
+  "allVoted": false
 }
 ```
 
-### 投票集計 API
+レスポンス例（全員投票完了 = 自動resolve実行）:
+```json
+{
+  "success": true,
+  "allVoted": true,
+  "isResolved": true,
+  "status": "RESULT",
+  "isGameOver": false,
+  "cityParams": {
+    "economy": 60,
+    "welfare": 45,
+    "education": 50,
+    "environment": 47,
+    "security": 55,
+    "humanRights": 50
+  },
+  "lastResult": {
+    "passedPolicyId": "policy_001",
+    "passedPolicyTitle": "経済政策1",
+    "actualEffects": { "economy": 10, "welfare": -5, ... },
+    "newsFlash": "【速報】政策が可決されました！",
+    "voteDetails": { "user1": "policy_001" }
+  }
+}
+```
+
+### 投票集計 API（後方互換）
+
+> ⚠️ **非推奨:** Vote API が全員投票完了時に自動でresolveを実行するため、通常は呼び出す必要がありません。
 
 ```bash
-# フロントエンドから全員投票完了時に自動でトリガー
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/resolve" \
   -H "Content-Type: application/json"
 ```
