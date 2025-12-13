@@ -4,7 +4,7 @@ sequenceDiagram
     participant FE as Frontend
     participant FS as Firestore
     participant CR as Cloud Run
-    participant AI as OpenAI
+    participant AI as Sakura AI
 
     Note over Host,AI: PHASE 1: ロビー (LOBBY)
 
@@ -63,18 +63,23 @@ sequenceDiagram
     FE-->>Player: 3つの政策カード表示
 
     Player->>FE: 政策Aに投票
-    FE->>FS: updateDoc(players/{userId})<br/>{ currentVote: A, hasVoted: true }
-    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{userId}: A }
+    FE->>CR: POST /api/rooms/{roomId}/vote<br/>{ playerId, policyId: A }
+    CR->>FS: プレイヤー・部屋の投票状態を更新
+    FS-->>CR: 完了
+    CR-->>FE: { success: true, allVoted: false }
     FS-->>FE: onSnapshot通知
     FE-->>Host: Player が投票完了
     FE-->>Player: 投票完了表示
 
-    Host->>FE: 政策Bに投票
-    FE->>FS: updateDoc(players/{hostId})<br/>{ currentVote: B, hasVoted: true }
-    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{hostId}: B }
+    Host->>FE: 政策Bに投票（最後の投票）
+    FE->>CR: POST /api/rooms/{roomId}/vote<br/>{ playerId, policyId: B }
+    Note over CR: 全員投票完了を検知<br/>自動でresolve処理を実行
+    CR->>FS: 投票集計・結果反映
+    FS-->>CR: 完了
+    CR-->>FE: { success: true, allVoted: true,<br/>isResolved: true, lastResult, cityParams }
     FS-->>FE: onSnapshot通知
-    FE-->>Host: 全員投票完了
-    FE-->>Player: Host が投票完了
+    FE-->>Host: 結果画面へ自動遷移
+    FE-->>Player: 結果画面へ自動遷移
 
     opt AI陳情（1回のみ使用可）
         Player->>FE: 陳情ボタン
@@ -95,21 +100,12 @@ sequenceDiagram
         end
     end
 
-    Note over Host,AI: PHASE 4: 投票集計 (→ RESULT)
+    Note over Host,AI: PHASE 4: 投票集計 (自動実行)
 
-    Note over FE: 全員投票完了を検知<br/>(全員の hasVoted が true)
-    FE->>CR: POST /api/rooms/{roomId}/resolve
-    CR->>FS: rooms/{roomId} 取得
-    FS-->>CR: 部屋データ (votes含む)
-    Note over CR: 投票集計: A=1票, B=1票<br/>同数の場合ランダム決定
-    CR->>FS: master_policies/{winningId} 取得
-    FS-->>CR: 政策データ (effects含む)
-    Note over CR: cityParams に効果適用<br/>崩壊チェック<br/>次の3枚を準備<br/>votes, hasVoted リセット
-    CR->>FS: updateDoc(rooms/{roomId})<br/>{ status: RESULT, lastResult,<br/>cityParams, currentPolicyIds,<br/>votes: リセット済み }
-    CR->>FS: 全プレイヤーの hasVoted, currentVote をリセット
-    FS-->>CR: 完了
-    CR-->>FE: { lastResult, cityParams, isGameOver }
-    FS-->>FE: onSnapshot通知
+    Note over CR: ※ 投票集計は最後の投票時に<br/>Vote API内で自動実行される<br/><br/>処理内容:<br/>1. 投票集計 (同数はランダム)<br/>2. cityParams に効果適用<br/>3. 崩壊チェック<br/>4. lastResult を設定<br/>5. status を RESULT に<br/>6. ゲーム終了判定
+
+    Note over FE: フロントエンドは Vote API の<br/>レスポンスで結果を受け取り<br/>そのまま結果画面を表示
+
     FE-->>Host: 結果画面表示<br/>「政策Aが可決！」<br/>効果: economy +10
     FE-->>Player: 結果画面表示<br/>「政策Aが可決！」<br/>効果: economy +10
 

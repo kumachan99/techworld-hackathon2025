@@ -459,9 +459,27 @@ func (h *Handler) Vote(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Vote: 投票成功",
 		slog.String("roomId", roomID),
 		slog.String("playerId", req.PlayerID),
-		slog.String("policyId", req.PolicyID))
+		slog.String("policyId", req.PolicyID),
+		slog.Bool("allVoted", output.AllVoted),
+		slog.Bool("isResolved", output.IsResolved))
+
+	// 自動resolveされた場合はresolve結果も返す
+	if output.IsResolved {
+		respondJSON(w, http.StatusOK, map[string]interface{}{
+			"success":    output.Success,
+			"allVoted":   output.AllVoted,
+			"isResolved": output.IsResolved,
+			"status":     output.Room.Status,
+			"lastResult": output.Room.LastResult,
+			"cityParams": output.Room.CityParams,
+			"isGameOver": output.IsGameOver,
+		})
+		return
+	}
+
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"success": output.Success,
+		"success":  output.Success,
+		"allVoted": output.AllVoted,
 	})
 }
 

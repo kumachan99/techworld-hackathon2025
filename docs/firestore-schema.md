@@ -129,8 +129,8 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 | ステータス | 説明 | 次へ進む条件 |
 |-----------|------|-------------|
 | LOBBY | 待機中 | 2人以上 & 全員 isReady → `POST /start` |
-| VOTING | 投票中 | 全員投票完了 → `POST /resolve` |
-| RESULT | 結果発表 | ホストが `POST /next` |
+| VOTING | 投票中 | 全員投票完了 → **Vote API内で自動resolve** |
+| RESULT | 結果発表 | `POST /next` |
 | FINISHED | 終了 | - |
 
 ---
@@ -307,7 +307,7 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 
 #### POST `/api/rooms/{roomId}/vote` - 投票
 
-政策に投票する。
+政策に投票する。**全員投票完了時は自動で投票集計（resolve）を実行する。**
 
 **リクエスト:**
 ```json
@@ -322,36 +322,64 @@ LOBBY → VOTING → RESULT → VOTING → ... → FINISHED
 2. 有効な政策IDであることを確認（currentPolicyIds に含まれる）
 3. 該当プレイヤーの `currentVote` を更新
 4. Room の `votes` を更新
+5. **全員投票済みかチェック**
+6. **全員投票済みなら自動でresolve処理を実行:**
+   - `votes` を集計して最多得票の政策を決定（同数はランダム）
+   - `cityParams` に効果を適用
+   - `lastResult` を設定
+   - `status` を `RESULT` に
+   - ゲーム終了判定
 
-**レスポンス:**
+**レスポンス（全員投票完了前）:**
 ```json
 {
-  "success": true
+  "success": true,
+  "allVoted": false
 }
 ```
 
+**レスポンス（全員投票完了 = 自動resolve実行）:**
+```json
+{
+  "success": true,
+  "allVoted": true,
+  "isResolved": true,
+  "status": "RESULT",
+  "lastResult": {
+    "passedPolicyId": "policy_001",
+    "passedPolicyTitle": "消費税廃止",
+    "actualEffects": { "economy": 20, "welfare": -15, ... },
+    "newsFlash": "【速報】...",
+    "voteDetails": { "user1": "policy_001", "user2": "policy_001" }
+  },
+  "cityParams": { "economy": 70, ... },
+  "isGameOver": false
+}
+```
+
+> **Note:** フロントエンドは `allVoted: true` かつ `isResolved: true` の場合、直接結果画面に遷移できます。
+
 ---
 
-#### POST `/api/rooms/{roomId}/resolve` - 投票集計
+#### POST `/api/rooms/{roomId}/resolve` - 投票集計（後方互換）
 
-投票を集計し結果を反映する。フロントで全員投票完了を検知したら呼び出す。
+> ⚠️ **非推奨:** このエンドポイントは後方互換のために残されています。
+> Vote API が全員投票完了時に自動でresolveを実行するため、通常は呼び出す必要がありません。
+
+投票を集計し結果を反映する。
 
 **リクエスト:** なし（空のJSON `{}` を送信）
 
 **処理:**
 1. VOTING 状態であることを確認
 2. 全員が投票済みであることを確認
-4. `votes` を集計して最多得票の政策を決定（同数はランダム）
-5. `master_policies` から `effects` を取得
-6. `cityParams` に効果を適用
-7. `isCollapsed` をチェック
-8. `lastResult` を設定
-9. 次のターンの準備:
-   - `deckIds` から3枚を `currentPolicyIds` に移動
-   - `votes` をリセット
-   - 全プレイヤーの `currentVote` を `""` に
-10. `status` を `RESULT` に
-11. ゲーム終了判定: `turn >= maxTurns` or `isCollapsed` → `FINISHED`
+3. `votes` を集計して最多得票の政策を決定（同数はランダム）
+4. `master_policies` から `effects` を取得
+5. `cityParams` に効果を適用
+6. `isCollapsed` をチェック
+7. `lastResult` を設定
+8. `status` を `RESULT` に
+9. ゲーム終了判定: `turn >= maxTurns` or `isCollapsed` → `FINISHED`
 
 **レスポンス:**
 ```json
@@ -406,7 +434,7 @@ AIに新しい政策を提案する（1人1回）。
 
 **処理:**
 1. 該当プレイヤーの `isPetitionUsed` を確認
-2. OpenAI API で審査
+2. Sakura AI API で審査
 3. 承認なら政策カードを生成し `deckIds` に追加
 4. `isPetitionUsed` を `true` に
 
@@ -475,14 +503,25 @@ export const startGame = (roomId: string) =>
     method: 'POST',
   });
 
-// 投票
-export const vote = (roomId: string, policyId: string) =>
-  apiCall<{ success: boolean }>(`/api/rooms/${roomId}/vote`, {
+// 投票（全員投票完了時は自動でresolveも実行される）
+export const vote = (roomId: string, playerId: string, policyId: string) =>
+  apiCall<VoteResponse>(`/api/rooms/${roomId}/vote`, {
     method: 'POST',
-    body: JSON.stringify({ policyId }),
+    body: JSON.stringify({ playerId, policyId }),
   });
 
-// 投票集計
+// VoteResponse型
+interface VoteResponse {
+  success: boolean;
+  allVoted: boolean;
+  isResolved?: boolean;      // 自動resolve実行時のみ
+  status?: string;           // 自動resolve実行時のみ
+  lastResult?: VoteResult;   // 自動resolve実行時のみ
+  cityParams?: CityParams;   // 自動resolve実行時のみ
+  isGameOver?: boolean;      // 自動resolve実行時のみ
+}
+
+// 投票集計（後方互換・通常は不要）
 export const resolveVote = (roomId: string) =>
   apiCall<ResolveVoteResponse>(`/api/rooms/${roomId}/resolve`, {
     method: 'POST',

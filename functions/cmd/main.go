@@ -91,7 +91,7 @@ func initializeHandler(firestoreClient *firestore.Client) *handler.Handler {
 	leaveRoomUC := usecase.NewLeaveRoomUseCase(roomRepo, playerRepo)
 	toggleReadyUC := usecase.NewToggleReadyUseCase(roomRepo, playerRepo)
 	startGameUC := usecase.NewStartGameUseCase(roomRepo, playerRepo, policyRepo)
-	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo)
+	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo, policyRepo)
 	resolveVoteUC := usecase.NewResolveVoteUseCase(roomRepo, playerRepo, policyRepo)
 	nextTurnUC := usecase.NewNextTurnUseCase(roomRepo, playerRepo)
 	submitPetitionUC := usecase.NewSubmitPetitionUseCase(roomRepo, playerRepo, policyRepo, aiClient)
