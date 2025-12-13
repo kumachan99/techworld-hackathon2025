@@ -22,7 +22,7 @@ func NewPlayer(displayName string, isHost bool, ideology *MasterIdeology) *Playe
 	return &Player{
 		DisplayName:    displayName,
 		IsHost:         isHost,
-		IsReady:        false,
+		IsReady:        true,
 		IsPetitionUsed: false,
 		Ideology:       ideology,
 		CurrentVote:    "",
