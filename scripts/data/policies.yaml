@@ -1,5 +1,7 @@
 # 政策マスターデータ
 # 各政策は effects で6つの街パラメータ全てに影響を与える
+# バランス設計: 合計効果を0~+5に抑制（ゼロサム寄り）
+# メイン効果: +8~+12, トレードオフ効果: -4~-10
 
 policies:
   # === economy ===
@@ -8,32 +10,32 @@ policies:
     description: 排出量取引制度の導入で環境投資と産業競争力を両立する経済政策
     newsFlash: 【速報】GX-ETSが正式開始！企業の脱炭素投資が一気に加速か
     effects:
-      economy: 18
+      economy: 10
       welfare: 0
       education: 0
-      environment: 10
+      environment: 5
       security: 0
-      humanRights: 0
+      humanRights: -5
 
   - policyId: policy_econ_002
     title: スタートアップ育成5か年計画
     description: 起業支援や資金供給強化を通じてイノベーションを促進する国家戦略
     newsFlash: 【速報】スタートアップ育成計画が本格始動！投資マネー流入で活況
     effects:
-      economy: 20
-      welfare: 0
-      education: 5
+      economy: 12
+      welfare: -5
+      education: 3
       environment: 0
       security: 0
-      humanRights: 0
+      humanRights: -5
 
   - policyId: policy_econ_003
     title: インボイス制度
     description: 取引の適正化と税収確保を狙う新しい消費税制度
     newsFlash: 【速報】インボイス制度開始！事業者の対応進むも混乱も
     effects:
-      economy: -10
-      welfare: 0
+      economy: 5
+      welfare: -5
       education: 0
       environment: 0
       security: 0
@@ -44,24 +46,24 @@ policies:
     description: 労働者の所得改善と消費拡大を狙う労働政策
     newsFlash: 【速報】最低賃金が過去最大幅で引き上げ！労働者から歓喜の声
     effects:
-      economy: -5
+      economy: -8
       welfare: 10
       education: 0
       environment: 0
       security: 0
-      humanRights: 0
+      humanRights: 3
 
   - policyId: policy_econ_005
     title: 物流2024年問題対策パッケージ
     description: ドライバー不足に対応するため配送効率改善と労働改革を推進
     newsFlash: 【速報】物流2024年対策が可決！配送網に大きな転換点
     effects:
-      economy: 10
-      welfare: 5
+      economy: 8
+      welfare: 3
       education: 0
-      environment: 0
+      environment: -3
       security: 0
-      humanRights: 0
+      humanRights: -3
 
 
   # === welfare ===
@@ -70,44 +72,44 @@ policies:
     description: 子育て支援を一元化し出生率改善を目指す組織改革
     newsFlash: 【速報】こども家庭庁が本格稼働！支援制度のわかりやすさ向上に期待
     effects:
-      economy: -5
-      welfare: 20
-      education: 5
+      economy: -8
+      welfare: 12
+      education: 3
       environment: 0
       security: 0
-      humanRights: 5
+      humanRights: 3
 
   - policyId: policy_wel_002
     title: マイナ保険証の完全導入
     description: 健康保険証のデジタル化で医療効率を向上させる改革
     newsFlash: 【速報】マイナ保険証の利用が本格化！医療現場で賛否の声
     effects:
-      economy: 5
-      welfare: 10
+      economy: 3
+      welfare: 8
       education: 0
       environment: 0
       security: 0
-      humanRights: -5
+      humanRights: -6
 
   - policyId: policy_wel_003
     title: 児童手当の所得制限撤廃
     description: 子育て支援の強化のため幅広い家庭に給付拡大
     newsFlash: 【速報】児童手当の所得制限撤廃！育児家庭に追い風
     effects:
-      economy: -5
-      welfare: 20
+      economy: -8
+      welfare: 12
       education: 0
       environment: 0
       security: 0
-      humanRights: 5
+      humanRights: 3
 
   - policyId: policy_wel_004
     title: 介護職員処遇改善加算の拡充
     description: 介護人材不足解消を目的とした賃上げ施策
     newsFlash: 【速報】介護職の賃上げ実施！人材定着へ期待高まる
     effects:
-      economy: -5
-      welfare: 18
+      economy: -6
+      welfare: 10
       education: 0
       environment: 0
       security: 0
@@ -118,12 +120,12 @@ policies:
     description: 負担軽減のため、高額治療を保険で支援する新制度
     newsFlash: 【速報】不妊治療が保険適用に！当事者から感謝の声相次ぐ
     effects:
-      economy: -10
-      welfare: 15
+      economy: -6
+      welfare: 10
       education: 0
       environment: 0
       security: 0
-      humanRights: 5
+      humanRights: 3
 
 
   # === education ===
@@ -134,20 +136,20 @@ policies:
     effects:
       economy: -5
       welfare: 0
-      education: 15
+      education: 10
       environment: 0
       security: 0
-      humanRights: 5
+      humanRights: 3
 
   - policyId: policy_edu_002
     title: 高校のデジタル教科書全面解禁
     description: ICT教育を推進し学習の効率化を狙う最新教育政策
     newsFlash: 【速報】デジタル教科書全面解禁！学校ICT環境が一気に進化
     effects:
-      economy: 5
+      economy: 3
       welfare: 0
-      education: 18
-      environment: 0
+      education: 10
+      environment: -3
       security: 0
       humanRights: 0
 
@@ -156,12 +158,12 @@ policies:
     description: 生成AIの適切な学習利用を促進する最新の教育方針
     newsFlash: 【速報】AI学習ガイドライン新設！教育現場が新時代へ
     effects:
-      economy: 5
+      economy: 3
       welfare: 0
-      education: 18
+      education: 10
       environment: 0
       security: 0
-      humanRights: 0
+      humanRights: -3
 
   - policyId: policy_edu_004
     title: 全国学力テストのオンライン化
@@ -170,22 +172,22 @@ policies:
     effects:
       economy: 0
       welfare: 0
-      education: 12
+      education: 8
       environment: 0
       security: 0
-      humanRights: 0
+      humanRights: -3
 
   - policyId: policy_edu_005
     title: 学校給食費の無償化（自治体拡大中）
     description: 経済格差をなくし子どもの食を保障する施策
     newsFlash: 【速報】学校給食無償化の自治体が拡大！家庭負担が軽減
     effects:
-      economy: -10
-      welfare: 10
-      education: 15
+      economy: -8
+      welfare: 5
+      education: 8
       environment: 0
       security: 0
-      humanRights: 5
+      humanRights: 3
 
 
   # === environment ===
@@ -194,10 +196,10 @@ policies:
     description: プラごみ削減を目的とした包括的リサイクル制度
     newsFlash: 【速報】プラ資源循環法が本格施行！企業に対応迫られる
     effects:
-      economy: -5
+      economy: -6
       welfare: 0
       education: 0
-      environment: 20
+      environment: 12
       security: 0
       humanRights: 0
 
@@ -206,10 +208,10 @@ policies:
     description: ガソリン車廃止を目指す長期脱炭素ロードマップ
     newsFlash: 【速報】2035年電動化方針強化！自動車業界に激震
     effects:
-      economy: -10
+      economy: -8
       welfare: 0
       education: 0
-      environment: 20
+      environment: 12
       security: 0
       humanRights: 0
 
@@ -218,10 +220,10 @@ policies:
     description: 国全体で温室効果ガス排出実質ゼロを目指す国家戦略
     newsFlash: 【速報】カーボンニュートラル目標前倒し議論も浮上
     effects:
-      economy: -5
+      economy: -6
       welfare: 0
       education: 0
-      environment: 18
+      environment: 10
       security: 0
       humanRights: 0
 
@@ -233,19 +235,19 @@ policies:
       economy: -5
       welfare: 0
       education: 0
-      environment: 15
+      environment: 10
       security: 0
-      humanRights: 0
+      humanRights: -3
 
   - policyId: policy_env_005
     title: 食品ロス削減推進法
     description: 企業と市民双方に廃棄削減を促す新たな環境法
     newsFlash: 【速報】食品ロス削減法が浸透！スーパーで割引商品が拡大
     effects:
-      economy: 5
-      welfare: 5
+      economy: 0
+      welfare: 3
       education: 0
-      environment: 15
+      environment: 8
       security: 0
       humanRights: 0
 
@@ -260,20 +262,20 @@ policies:
       welfare: 0
       education: 0
       environment: 0
-      security: 20
-      humanRights: -10
+      security: 12
+      humanRights: -8
 
   - policyId: policy_sec_002
     title: サイバー警察局の新設
     description: 急増するサイバー犯罪に対応するための専門組織
     newsFlash: 【速報】サイバー警察局が発足！攻撃対策が大幅強化
     effects:
-      economy: 5
+      economy: 3
       welfare: 0
       education: 0
       environment: 0
-      security: 18
-      humanRights: -5
+      security: 10
+      humanRights: -6
 
   - policyId: policy_sec_003
     title: 出入国審査強化（先端監視システム導入）
@@ -284,7 +286,7 @@ policies:
       welfare: 0
       education: 0
       environment: 0
-      security: 20
+      security: 12
       humanRights: -10
 
   - policyId: policy_sec_004
@@ -296,8 +298,8 @@ policies:
       welfare: 0
       education: 0
       environment: 0
-      security: 18
-      humanRights: -10
+      security: 10
+      humanRights: -8
 
   - policyId: policy_sec_005
     title: 災害対策基本法の強化
@@ -305,10 +307,10 @@ policies:
     newsFlash: 【速報】防災法強化へ！避難インフラ整備が進展
     effects:
       economy: -5
-      welfare: 5
+      welfare: 3
       education: 0
       environment: 0
-      security: 15
+      security: 10
       humanRights: 0
 
 
@@ -322,8 +324,8 @@ policies:
       welfare: 0
       education: 0
       environment: 0
-      security: 0
-      humanRights: 18
+      security: -3
+      humanRights: 10
 
   - policyId: policy_hr_002
     title: LGBT理解増進法
@@ -331,23 +333,23 @@ policies:
     newsFlash: 【速報】LGBT理解増進法が施行！社会の包摂性が前進
     effects:
       economy: 0
-      welfare: 5
-      education: 5
+      welfare: 3
+      education: 3
       environment: 0
-      security: 0
-      humanRights: 20
+      security: -3
+      humanRights: 10
 
   - policyId: policy_hr_003
     title: 外国人労働者の受け入れ拡大（特定技能2号拡大）
     description: 労働力確保のため外国人の在留資格要件を緩和
     newsFlash: 【速報】特定技能2号が拡大！企業現場で歓迎の声
     effects:
-      economy: 10
-      welfare: -5
+      economy: 5
+      welfare: -3
       education: 0
       environment: 0
       security: -5
-      humanRights: 15
+      humanRights: 8
 
   - policyId: policy_hr_004
     title: 障害者差別解消法改正
@@ -355,20 +357,20 @@ policies:
     newsFlash: 【速報】差別解消法が改正！バリアフリー社会へ一歩前進
     effects:
       economy: -5
-      welfare: 10
+      welfare: 5
       education: 0
       environment: 0
       security: 0
-      humanRights: 18
+      humanRights: 10
 
   - policyId: policy_hr_005
     title: 技能実習制度の廃止と新制度創設案
     description: 外国人労働者の人権保護を目的に旧制度を全面見直し
     newsFlash: 【速報】技能実習制度の廃止案浮上！国際的批判に対応へ
     effects:
-      economy: -10
-      welfare: 5
+      economy: -8
+      welfare: 3
       education: 0
       environment: 0
-      security: -5
-      humanRights: 20
+      security: -3
+      humanRights: 12
