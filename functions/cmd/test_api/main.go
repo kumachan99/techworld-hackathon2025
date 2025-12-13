@@ -125,41 +125,71 @@ func main() {
 		// 最初のpolicyIdを使用
 		targetPolicyID := currentPolicyIDs[0]
 
-		// 7. 投票（プレイヤー1）
-		fmt.Println("\n=== 7. Vote (Player 1) ===")
+		// 7. 投票（プレイヤー1）- まだ全員投票完了ではない
+		fmt.Println("\n=== 7. Vote (Player 1) - 自動resolveテスト ===")
 		voteReq := map[string]interface{}{
 			"playerId": player1ID,
 			"policyId": targetPolicyID,
-			"vote":     true,
 		}
 		voteResp, err := postJSON(client, fmt.Sprintf("/api/rooms/%s/vote", roomID), voteReq)
 		if err != nil {
 			fmt.Printf("❌ Error: %v\n", err)
 		} else {
 			fmt.Printf("✅ Voted for %s: %s\n", targetPolicyID, prettyJSON(voteResp))
+			// allVoted が false であることを確認
+			if allVoted, ok := voteResp["allVoted"].(bool); ok && !allVoted {
+				fmt.Println("   ✅ allVoted=false（まだ全員投票完了していない）")
+			} else {
+				fmt.Println("   ⚠️  allVoted の値が想定と異なります")
+			}
 		}
 
-		// 8. 投票（プレイヤー2）
-		fmt.Println("\n=== 8. Vote (Player 2) ===")
+		// 8. 投票（プレイヤー2）- 全員投票完了 → 自動resolve
+		fmt.Println("\n=== 8. Vote (Player 2) - 最後の投票で自動resolve ===")
 		voteReq2 := map[string]interface{}{
 			"playerId": player2ID,
 			"policyId": targetPolicyID,
-			"vote":     true,
 		}
 		voteResp2, err := postJSON(client, fmt.Sprintf("/api/rooms/%s/vote", roomID), voteReq2)
 		if err != nil {
 			fmt.Printf("❌ Error: %v\n", err)
 		} else {
 			fmt.Printf("✅ Voted for %s: %s\n", targetPolicyID, prettyJSON(voteResp2))
+
+			// 自動resolveの確認
+			allVoted, _ := voteResp2["allVoted"].(bool)
+			isResolved, _ := voteResp2["isResolved"].(bool)
+
+			if allVoted && isResolved {
+				fmt.Println("   ✅ allVoted=true, isResolved=true（自動resolveが実行された）")
+
+				// 追加のフィールドを確認
+				if status, ok := voteResp2["status"].(string); ok {
+					fmt.Printf("   ✅ status=%s\n", status)
+				}
+				if _, ok := voteResp2["lastResult"]; ok {
+					fmt.Println("   ✅ lastResult が含まれている")
+				}
+				if _, ok := voteResp2["cityParams"]; ok {
+					fmt.Println("   ✅ cityParams が含まれている")
+				}
+				if isGameOver, ok := voteResp2["isGameOver"].(bool); ok {
+					fmt.Printf("   ✅ isGameOver=%v\n", isGameOver)
+				}
+			} else {
+				fmt.Println("   ❌ 自動resolveが実行されていません")
+				fmt.Printf("   allVoted=%v, isResolved=%v\n", allVoted, isResolved)
+			}
 		}
 	}
 
-	// 9. 投票集計
-	fmt.Println("\n=== 9. Resolve Vote ===")
+	// 9. 投票集計（後方互換テスト - 既にresolve済みなのでエラーになるはず）
+	fmt.Println("\n=== 9. Resolve Vote (後方互換テスト - 既にRESULT状態) ===")
 	resolveReq := map[string]interface{}{}
 	resolveResp, err := postJSON(client, fmt.Sprintf("/api/rooms/%s/resolve", roomID), resolveReq)
 	if err != nil {
-		fmt.Printf("❌ Error: %v\n", err)
+		fmt.Printf("⚠️  期待通りエラー: %v\n", err)
+		fmt.Println("   （自動resolveにより既にRESULT状態のため）")
 	} else {
 		fmt.Printf("✅ Resolved: %s\n", prettyJSON(resolveResp))
 	}

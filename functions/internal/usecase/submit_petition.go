@@ -80,8 +80,26 @@ func (uc *SubmitPetitionUseCase) Execute(ctx context.Context, input SubmitPetiti
 		return nil, entity.ErrPetitionUsed
 	}
 
-	// AI審査
-	result, err := uc.aiClient.ReviewPetition(ctx, input.PetitionText)
+	// 過去に採用された政策を取得
+	var passedPolicies []*entity.MasterPolicy
+	for _, policyID := range room.PassedPolicyIDs {
+		policy, err := uc.policyRepo.FindByID(ctx, policyID)
+		if err != nil {
+			// エラーは無視して続行（削除された政策など）
+			continue
+		}
+		if policy != nil {
+			passedPolicies = append(passedPolicies, policy)
+		}
+	}
+
+	// AI審査（国の状況と過去の政策を考慮）
+	petitionCtx := &ai.PetitionContext{
+		PetitionText:   input.PetitionText,
+		PassedPolicies: passedPolicies,
+		CityParams:     room.CityParams,
+	}
+	result, err := uc.aiClient.ReviewPetition(ctx, petitionCtx)
 	if err != nil {
 		return nil, err
 	}

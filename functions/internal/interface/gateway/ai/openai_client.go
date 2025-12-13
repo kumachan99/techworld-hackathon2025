@@ -38,13 +38,20 @@ type PetitionResult struct {
 	Reason   string
 }
 
+// PetitionContext は陳情審査のコンテキスト情報
+type PetitionContext struct {
+	PetitionText   string                 // 陳情テキスト
+	PassedPolicies []*entity.MasterPolicy // これまで採用された政策
+	CityParams     entity.CityParams      // 現在の国のパラメータ
+}
+
 // ReviewPetition は陳情を審査し、承認された場合は政策を生成する
-func (c *SakuraAIClient) ReviewPetition(ctx context.Context, petitionText string) (*PetitionResult, error) {
+func (c *SakuraAIClient) ReviewPetition(ctx context.Context, petitionCtx *PetitionContext) (*PetitionResult, error) {
 	if c.token == "" {
 		return nil, fmt.Errorf("SAKURA_AI_TOKEN environment variable is not set")
 	}
 
-	prompt := buildPrompt(petitionText)
+	prompt := buildPrompt(petitionCtx)
 
 	reqBody := map[string]interface{}{
 		"model": sakuraModel,
@@ -96,53 +103,57 @@ func (c *SakuraAIClient) ReviewPetition(ctx context.Context, petitionText string
 	return parseAIResponse(sakuraResp.Choices[0].Message.Content)
 }
 
-func buildPrompt(petitionText string) string {
+func buildPrompt(petitionCtx *PetitionContext) string {
+	// 現在の国の状況を構築
+	currentStatus := buildCurrentStatus(petitionCtx.CityParams)
+
+	// 過去に採用された政策の履歴を構築
+	policyHistory := buildPolicyHistory(petitionCtx.PassedPolicies)
+
 	return fmt.Sprintf(`あなたは架空の国の政策審査官です。
 国民からの政策提案（陳情）を審査し、承認または却下を判断してください。
 
-【国家パラメータ】
-- economy: 経済
-- welfare: 福祉
-- education: 教育
-- environment: 環境
-- security: 治安
-- humanRights: 人権
+【国家パラメータの説明】
+- economy: 経済（産業・雇用・財政）
+- welfare: 福祉（社会保障・医療・年金）
+- education: 教育（学校・研究・人材育成）
+- environment: 環境（自然保護・エネルギー・持続可能性）
+- security: 治安（警察・防犯・公共安全）
+- humanRights: 人権（自由・平等・プライバシー）
 
-【既存の政策例（参考）】
-以下は既に存在する政策カードの例です。効果値のバランスを参考にしてください。
+%s
 
-1. スタートアップ育成5か年計画
-   説明: 起業支援や資金供給強化を通じてイノベーションを促進する国家戦略
-   効果: economy:+20, welfare:0, education:+5, environment:0, security:0, humanRights:0
-
-2. 児童手当の所得制限撤廃
-   説明: 子育て支援の強化のため幅広い家庭に給付拡大
-   効果: economy:-5, welfare:+20, education:0, environment:0, security:0, humanRights:+5
-
-3. 警察官の増員計画（地域安全強化）
-   説明: 治安悪化地域の巡回強化を目的とした増員施策
-   効果: economy:-5, welfare:0, education:0, environment:0, security:+20, humanRights:-10
-
-4. 外国人労働者の受け入れ拡大
-   説明: 労働力確保のため外国人の在留資格要件を緩和
-   効果: economy:+10, welfare:-5, education:0, environment:0, security:-5, humanRights:+15
-
-5. EV普及加速化政策
-   説明: ガソリン車廃止を目指す長期脱炭素ロードマップ
-   効果: economy:-10, welfare:0, education:0, environment:+20, security:0, humanRights:0
-
-【効果値のルール】
-- 各パラメータの効果値は -20 〜 +20 の範囲
-- メインの効果（最も影響を受ける分野）は ±15〜20 程度
-- 副次的な効果は ±5〜10 程度
-- 多くの政策にはトレードオフがある（例：治安向上→人権制限）
-- 0の効果も積極的に使う（全パラメータに影響する必要はない）
+%s
 
 【市民からの提案】
 %s
 
+===========================================
+【審査プロセス】
+
+まず、上記の情報から「この国はどんな国か」を推論してください。
+例えば：
+- 北欧型福祉国家（福祉・人権重視、高税率容認）
+- 自由経済国家（経済・規制緩和重視、小さな政府志向）
+- 環境先進国（環境・持続可能性重視、経済コスト容認）
+- 安全保障重視国家（治安・秩序重視、自由制限容認）
+- バランス型国家（特定の偏りなし）
+など
+
+次に、推論した国の性格を踏まえて、この陳情が通るかどうかを判断してください。
+- その国の国民が支持するか？
+- その国のこれまでの政策方針と整合するか？
+- その国の価値観に反していないか？
+
+===========================================
+【効果値のルール（承認時のみ使用）】
+- 各パラメータの効果値は -20 〜 +20 の範囲
+- メインの効果は ±15〜20 程度、副次的な効果は ±5〜10 程度
+- トレードオフを意識する（例：治安向上→人権制限）
+- 0の効果も積極的に使う
+
 【回答形式】
-提案を政策として承認する場合、以下のJSON形式で回答してください：
+承認する場合：
 {
   "approved": true,
   "title": "政策のタイトル（20文字以内）",
@@ -158,18 +169,120 @@ func buildPrompt(petitionText string) string {
   }
 }
 
-却下する場合は以下のJSON形式で回答してください：
+却下する場合：
 {
   "approved": false,
-  "reason": "却下理由"
+  "reason": "却下理由（その国の性格を踏まえた理由）"
 }
 
 【重要な注意事項】
-- あなたは架空の国の政策審査官としてロールプレイしてください
+- 架空の国の政策審査官としてロールプレイしてください
 - 「効果」「パラメータ」「バランス」「ゲーム」といったメタ的な言葉は絶対に使わないでください
 - 却下理由は現実の政治家や官僚が使うような表現で述べてください
-  例：「予算確保が困難」「憲法上の問題がある」「国民の合意形成が不十分」「国際情勢を鑑みると時期尚早」など
-- 承認・却下どちらの場合も、あくまで政策審査官として自然な応答をしてください`, petitionText)
+- JSONのみを出力してください（思考過程は出力しないでください）`, currentStatus, policyHistory, petitionCtx.PetitionText)
+}
+
+// buildCurrentStatus は現在の国の状況を文字列で構築する
+func buildCurrentStatus(cityParams entity.CityParams) string {
+	var sb strings.Builder
+	sb.WriteString("【現在の国の状況】\n")
+	sb.WriteString("各分野の現在値（50が初期値、0以下または100以上で国家崩壊）:\n\n")
+
+	params := []struct {
+		name  string
+		value int
+	}{
+		{"経済", cityParams.Economy},
+		{"福祉", cityParams.Welfare},
+		{"教育", cityParams.Education},
+		{"環境", cityParams.Environment},
+		{"治安", cityParams.Security},
+		{"人権", cityParams.HumanRights},
+	}
+
+	// 高い分野と低い分野を分類
+	var highValues, lowValues, normalValues []string
+	for _, p := range params {
+		status := getStatusDescription(p.value)
+		line := fmt.Sprintf("%s: %d %s", p.name, p.value, status)
+		if p.value >= 60 {
+			highValues = append(highValues, line)
+		} else if p.value <= 40 {
+			lowValues = append(lowValues, line)
+		} else {
+			normalValues = append(normalValues, line)
+		}
+	}
+
+	// 国の価値観（高い分野）を強調
+	if len(highValues) > 0 {
+		sb.WriteString("★ この国が重視している価値観:\n")
+		for _, v := range highValues {
+			sb.WriteString(fmt.Sprintf("  - %s\n", v))
+		}
+		sb.WriteString("\n")
+	}
+
+	// 課題（低い分野）
+	if len(lowValues) > 0 {
+		sb.WriteString("▼ この国の課題:\n")
+		for _, v := range lowValues {
+			sb.WriteString(fmt.Sprintf("  - %s\n", v))
+		}
+		sb.WriteString("\n")
+	}
+
+	// 標準的な分野
+	if len(normalValues) > 0 {
+		sb.WriteString("- その他:\n")
+		for _, v := range normalValues {
+			sb.WriteString(fmt.Sprintf("  - %s\n", v))
+		}
+	}
+
+	return sb.String()
+}
+
+// getStatusDescription は数値から状況の説明を返す
+func getStatusDescription(value int) string {
+	switch {
+	case value <= 20:
+		return "（危機的）"
+	case value <= 35:
+		return "（低迷）"
+	case value <= 45:
+		return "（やや低い）"
+	case value <= 55:
+		return "（標準）"
+	case value <= 65:
+		return "（やや高い）"
+	case value <= 80:
+		return "（好調）"
+	default:
+		return "（過熱気味）"
+	}
+}
+
+// buildPolicyHistory は過去に採用された政策の履歴を文字列で構築する
+func buildPolicyHistory(policies []*entity.MasterPolicy) string {
+	if len(policies) == 0 {
+		return "【これまでに採用された政策】\n（まだ政策は採用されていません）"
+	}
+
+	var sb strings.Builder
+	sb.WriteString("【これまでに採用された政策】\n")
+	sb.WriteString("この国では以下の政策が国民投票により可決されました:\n\n")
+
+	for i, p := range policies {
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, p.Title))
+		sb.WriteString(fmt.Sprintf("   説明: %s\n", p.Description))
+		// effectsも表示（審査官は把握している設定）
+		sb.WriteString(fmt.Sprintf("   影響: economy:%+d, welfare:%+d, education:%+d, environment:%+d, security:%+d, humanRights:%+d\n\n",
+			p.Effects["economy"], p.Effects["welfare"], p.Effects["education"],
+			p.Effects["environment"], p.Effects["security"], p.Effects["humanRights"]))
+	}
+
+	return sb.String()
 }
 
 // extractJSON はマークダウンのコードブロックからJSONを抽出する
