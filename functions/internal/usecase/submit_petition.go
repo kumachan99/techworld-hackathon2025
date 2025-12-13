@@ -28,7 +28,7 @@ type SubmitPetitionUseCase struct {
 	roomRepo   repository.RoomRepository
 	playerRepo repository.PlayerRepository
 	policyRepo repository.PolicyRepository
-	aiClient   *ai.OpenAIClient
+	aiClient   *ai.SakuraAIClient
 }
 
 // NewSubmitPetitionUseCase は SubmitPetitionUseCase を作成する
@@ -36,7 +36,7 @@ func NewSubmitPetitionUseCase(
 	roomRepo repository.RoomRepository,
 	playerRepo repository.PlayerRepository,
 	policyRepo repository.PolicyRepository,
-	aiClient *ai.OpenAIClient,
+	aiClient *ai.SakuraAIClient,
 ) *SubmitPetitionUseCase {
 	return &SubmitPetitionUseCase{
 		roomRepo:   roomRepo,

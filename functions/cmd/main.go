@@ -83,8 +83,7 @@ func initializeHandler(firestoreClient *firestore.Client) *handler.Handler {
 	ideologyRepo := firestoreGateway.NewIdeologyRepository(firestoreClient)
 
 	// AI Client
-	openaiAPIKey := os.Getenv("OPENAI_API_KEY")
-	aiClient := ai.NewOpenAIClient(openaiAPIKey)
+	aiClient := ai.NewSakuraAIClient()
 
 	// UseCase
 	createRoomUC := usecase.NewCreateRoomUseCase(roomRepo, playerRepo, ideologyRepo)
