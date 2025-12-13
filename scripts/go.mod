@@ -1,6 +1,6 @@
 module scripts
 
-go 1.25.4
+go 1.24.0
 
 require (
 	cel.dev/expr v0.24.0 // indirect

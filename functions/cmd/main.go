@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -19,6 +19,16 @@ import (
 func main() {
 	ctx := context.Background()
 
+	// slogロガーの初期化
+	logLevel := slog.LevelInfo
+	if os.Getenv("DEBUG") == "true" {
+		logLevel = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
+	slog.SetDefault(logger)
+
 	// Firebase初期化
 	// ローカル開発時は FIRESTORE_EMULATOR_HOST が設定されていると自動でエミュレータに接続
 	projectID := os.Getenv("GCP_PROJECT")
@@ -32,13 +42,15 @@ func main() {
 	conf := &firebase.Config{ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, conf)
 	if err != nil {
-		log.Fatalf("Failed to initialize Firebase: %v", err)
+		slog.Error("Failed to initialize Firebase", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	// Firestoreクライアント初期化
 	firestoreClient, err := app.Firestore(ctx)
 	if err != nil {
-		log.Fatalf("Failed to initialize Firestore: %v", err)
+		slog.Error("Failed to initialize Firestore", slog.Any("error", err))
+		os.Exit(1)
 	}
 	defer firestoreClient.Close()
 
@@ -55,9 +67,10 @@ func main() {
 		port = "8081" // ローカルではFirestoreエミュレータが8080を使用
 	}
 
-	log.Printf("Server starting on port %s", port)
+	slog.Info("Server starting", slog.String("port", port))
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		slog.Error("Failed to start server", slog.Any("error", err))
+		os.Exit(1)
 	}
 }
 

@@ -3,7 +3,7 @@
 
 policies:
   # === economy ===
-  - id: policy_econ_001
+  - policyId: policy_econ_001
     title: 成長志向型カーボンプライシング（GX-ETS）
     description: 排出量取引制度の導入で環境投資と産業競争力を両立する経済政策
     newsFlash: 【速報】GX-ETSが正式開始！企業の脱炭素投資が一気に加速か
@@ -15,7 +15,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_econ_002
+  - policyId: policy_econ_002
     title: スタートアップ育成5か年計画
     description: 起業支援や資金供給強化を通じてイノベーションを促進する国家戦略
     newsFlash: 【速報】スタートアップ育成計画が本格始動！投資マネー流入で活況
@@ -27,7 +27,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_econ_003
+  - policyId: policy_econ_003
     title: インボイス制度
     description: 取引の適正化と税収確保を狙う新しい消費税制度
     newsFlash: 【速報】インボイス制度開始！事業者の対応進むも混乱も
@@ -39,7 +39,7 @@ policies:
       security: 0
       humanRights: -5
 
-  - id: policy_econ_004
+  - policyId: policy_econ_004
     title: 最低賃金の全国的な大幅引き上げ
     description: 労働者の所得改善と消費拡大を狙う労働政策
     newsFlash: 【速報】最低賃金が過去最大幅で引き上げ！労働者から歓喜の声
@@ -51,7 +51,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_econ_005
+  - policyId: policy_econ_005
     title: 物流2024年問題対策パッケージ
     description: ドライバー不足に対応するため配送効率改善と労働改革を推進
     newsFlash: 【速報】物流2024年対策が可決！配送網に大きな転換点
@@ -65,7 +65,7 @@ policies:
 
 
   # === welfare ===
-  - id: policy_wel_001
+  - policyId: policy_wel_001
     title: こども家庭庁設立
     description: 子育て支援を一元化し出生率改善を目指す組織改革
     newsFlash: 【速報】こども家庭庁が本格稼働！支援制度のわかりやすさ向上に期待
@@ -77,7 +77,7 @@ policies:
       security: 0
       humanRights: 5
 
-  - id: policy_wel_002
+  - policyId: policy_wel_002
     title: マイナ保険証の完全導入
     description: 健康保険証のデジタル化で医療効率を向上させる改革
     newsFlash: 【速報】マイナ保険証の利用が本格化！医療現場で賛否の声
@@ -89,7 +89,7 @@ policies:
       security: 0
       humanRights: -5
 
-  - id: policy_wel_003
+  - policyId: policy_wel_003
     title: 児童手当の所得制限撤廃
     description: 子育て支援の強化のため幅広い家庭に給付拡大
     newsFlash: 【速報】児童手当の所得制限撤廃！育児家庭に追い風
@@ -101,7 +101,7 @@ policies:
       security: 0
       humanRights: 5
 
-  - id: policy_wel_004
+  - policyId: policy_wel_004
     title: 介護職員処遇改善加算の拡充
     description: 介護人材不足解消を目的とした賃上げ施策
     newsFlash: 【速報】介護職の賃上げ実施！人材定着へ期待高まる
@@ -113,7 +113,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_wel_005
+  - policyId: policy_wel_005
     title: 不妊治療の保険適用拡大
     description: 負担軽減のため、高額治療を保険で支援する新制度
     newsFlash: 【速報】不妊治療が保険適用に！当事者から感謝の声相次ぐ
@@ -127,7 +127,7 @@ policies:
 
 
   # === education ===
-  - id: policy_edu_001
+  - policyId: policy_edu_001
     title: 教員の残業上限規制導入
     description: 教員の働き方を改善し教育現場の持続性を確保する施策
     newsFlash: 【速報】教員残業規制へ！教育現場に構造改革の波
@@ -139,7 +139,7 @@ policies:
       security: 0
       humanRights: 5
 
-  - id: policy_edu_002
+  - policyId: policy_edu_002
     title: 高校のデジタル教科書全面解禁
     description: ICT教育を推進し学習の効率化を狙う最新教育政策
     newsFlash: 【速報】デジタル教科書全面解禁！学校ICT環境が一気に進化
@@ -151,7 +151,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_edu_003
+  - policyId: policy_edu_003
     title: 小学校での生成AI学習ガイドライン導入
     description: 生成AIの適切な学習利用を促進する最新の教育方針
     newsFlash: 【速報】AI学習ガイドライン新設！教育現場が新時代へ
@@ -163,7 +163,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_edu_004
+  - policyId: policy_edu_004
     title: 全国学力テストのオンライン化
     description: 試験をデジタル化し教育データの利活用を強化
     newsFlash: 【速報】全国学テがオンライン化！生徒負担の軽減に期待
@@ -175,7 +175,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_edu_005
+  - policyId: policy_edu_005
     title: 学校給食費の無償化（自治体拡大中）
     description: 経済格差をなくし子どもの食を保障する施策
     newsFlash: 【速報】学校給食無償化の自治体が拡大！家庭負担が軽減
@@ -189,7 +189,7 @@ policies:
 
 
   # === environment ===
-  - id: policy_env_001
+  - policyId: policy_env_001
     title: プラスチック資源循環促進法
     description: プラごみ削減を目的とした包括的リサイクル制度
     newsFlash: 【速報】プラ資源循環法が本格施行！企業に対応迫られる
@@ -201,7 +201,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_env_002
+  - policyId: policy_env_002
     title: EV普及加速化政策（自動車2035年電動化方針）
     description: ガソリン車廃止を目指す長期脱炭素ロードマップ
     newsFlash: 【速報】2035年電動化方針強化！自動車業界に激震
@@ -213,7 +213,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_env_003
+  - policyId: policy_env_003
     title: カーボンニュートラル宣言（2050年）
     description: 国全体で温室効果ガス排出実質ゼロを目指す国家戦略
     newsFlash: 【速報】カーボンニュートラル目標前倒し議論も浮上
@@ -225,7 +225,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_env_004
+  - policyId: policy_env_004
     title: 太陽光パネル設置義務化（東京都）
     description: 新築住宅に太陽光パネル設置を求める環境施策
     newsFlash: 【速報】太陽光義務化スタート！住宅メーカーに波紋広がる
@@ -237,7 +237,7 @@ policies:
       security: 0
       humanRights: 0
 
-  - id: policy_env_005
+  - policyId: policy_env_005
     title: 食品ロス削減推進法
     description: 企業と市民双方に廃棄削減を促す新たな環境法
     newsFlash: 【速報】食品ロス削減法が浸透！スーパーで割引商品が拡大
@@ -251,7 +251,7 @@ policies:
 
 
   # === security ===
-  - id: policy_sec_001
+  - policyId: policy_sec_001
     title: 警察官の増員計画（地域安全強化）
     description: 治安悪化地域の巡回強化を目的とした増員施策
     newsFlash: 【速報】警察官増員へ！治安改善に期待高まる
@@ -263,7 +263,7 @@ policies:
       security: 20
       humanRights: -10
 
-  - id: policy_sec_002
+  - policyId: policy_sec_002
     title: サイバー警察局の新設
     description: 急増するサイバー犯罪に対応するための専門組織
     newsFlash: 【速報】サイバー警察局が発足！攻撃対策が大幅強化
@@ -275,7 +275,7 @@ policies:
       security: 18
       humanRights: -5
 
-  - id: policy_sec_003
+  - policyId: policy_sec_003
     title: 出入国審査強化（先端監視システム導入）
     description: 入国管理の厳格化と国境警備強化を図る施策
     newsFlash: 【速報】入国審査が強化！空港で長蛇の列も
@@ -287,7 +287,7 @@ policies:
       security: 20
       humanRights: -10
 
-  - id: policy_sec_004
+  - policyId: policy_sec_004
     title: 重大犯罪への厳罰化改正
     description: 刑罰を強化し犯罪抑止を図る法改正案
     newsFlash: 【速報】厳罰化法案が成立！被害者家族が涙の訴え
@@ -299,7 +299,7 @@ policies:
       security: 18
       humanRights: -10
 
-  - id: policy_sec_005
+  - policyId: policy_sec_005
     title: 災害対策基本法の強化
     description: 自然災害増加に対応する防災機能強化施策
     newsFlash: 【速報】防災法強化へ！避難インフラ整備が進展
@@ -313,7 +313,7 @@ policies:
 
 
   # === humanRights ===
-  - id: policy_hr_001
+  - policyId: policy_hr_001
     title: 選択的夫婦別姓制度の法制化議論
     description: 家族のあり方の多様性を尊重する制度改革
     newsFlash: 【速報】夫婦別姓に前進！国会で本格審議へ
@@ -325,7 +325,7 @@ policies:
       security: 0
       humanRights: 18
 
-  - id: policy_hr_002
+  - policyId: policy_hr_002
     title: LGBT理解増進法
     description: 性的マイノリティへの理解促進と差別防止を目的とした法
     newsFlash: 【速報】LGBT理解増進法が施行！社会の包摂性が前進
@@ -337,7 +337,7 @@ policies:
       security: 0
       humanRights: 20
 
-  - id: policy_hr_003
+  - policyId: policy_hr_003
     title: 外国人労働者の受け入れ拡大（特定技能2号拡大）
     description: 労働力確保のため外国人の在留資格要件を緩和
     newsFlash: 【速報】特定技能2号が拡大！企業現場で歓迎の声
@@ -349,7 +349,7 @@ policies:
       security: -5
       humanRights: 15
 
-  - id: policy_hr_004
+  - policyId: policy_hr_004
     title: 障害者差別解消法改正
     description: 障害者への合理的配慮を事業者に義務化する法改正
     newsFlash: 【速報】差別解消法が改正！バリアフリー社会へ一歩前進
@@ -361,7 +361,7 @@ policies:
       security: 0
       humanRights: 18
 
-  - id: policy_hr_005
+  - policyId: policy_hr_005
     title: 技能実習制度の廃止と新制度創設案
     description: 外国人労働者の人権保護を目的に旧制度を全面見直し
     newsFlash: 【速報】技能実習制度の廃止案浮上！国際的批判に対応へ

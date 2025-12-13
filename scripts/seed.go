@@ -112,7 +112,15 @@ func main() {
 
 // getDataDir はデータディレクトリのパスを返す
 func getDataDir() string {
-	// このファイルのディレクトリを基準にする
+	// 環境変数 DATA_DIR が設定されている場合はそれを使用
+	if dir := os.Getenv("DATA_DIR"); dir != "" {
+		return dir
+	}
+	// Cloud Run Jobs 用の固定パス
+	if _, err := os.Stat("/app/data"); err == nil {
+		return "/app/data"
+	}
+	// ローカル開発用: このファイルのディレクトリを基準にする
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		log.Fatal("Failed to get current file path")
@@ -192,13 +200,13 @@ func seedIdeologies(ctx context.Context, client *firestore.Client, dataDir strin
 			"ideologyId":  ideology.IdeologyID,
 			"name":        ideology.Name,
 			"description": ideology.Description,
-			"coefficients": map[string]int{
-				"economy":     ideology.Coefficients.Economy,
-				"welfare":     ideology.Coefficients.Welfare,
-				"education":   ideology.Coefficients.Education,
-				"environment": ideology.Coefficients.Environment,
-				"security":    ideology.Coefficients.Security,
-				"humanRights": ideology.Coefficients.HumanRights,
+			"coefficients": map[string]float64{
+				"economy":     float64(ideology.Coefficients.Economy),
+				"welfare":     float64(ideology.Coefficients.Welfare),
+				"education":   float64(ideology.Coefficients.Education),
+				"environment": float64(ideology.Coefficients.Environment),
+				"security":    float64(ideology.Coefficients.Security),
+				"humanRights": float64(ideology.Coefficients.HumanRights),
 			},
 		})
 	}
