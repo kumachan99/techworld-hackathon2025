@@ -22,6 +22,12 @@ type RoomRepository interface {
 	Delete(ctx context.Context, roomID string) error
 }
 
+// PlayerWithID はプレイヤーとそのIDをセットにした構造体
+type PlayerWithID struct {
+	UserID string
+	Player *entity.Player
+}
+
 // PlayerRepository はプレイヤーの永続化を担当するインターフェース
 // パス: rooms/{roomId}/players/{userId}
 type PlayerRepository interface {
@@ -30,6 +36,9 @@ type PlayerRepository interface {
 
 	// FindAllByRoomID は指定された部屋の全プレイヤーを取得する
 	FindAllByRoomID(ctx context.Context, roomID string) ([]*entity.Player, error)
+
+	// FindAllWithIDsByRoomID は指定された部屋の全プレイヤーをIDと共に取得する
+	FindAllWithIDsByRoomID(ctx context.Context, roomID string) ([]*PlayerWithID, error)
 
 	// Create はプレイヤーを作成する
 	Create(ctx context.Context, roomID, userID string, player *entity.Player) error

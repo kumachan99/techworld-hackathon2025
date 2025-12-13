@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
 	"github.com/techworld-hackathon/functions/internal/domain/repository"
@@ -92,7 +91,6 @@ func (uc *StartGameUseCase) Execute(ctx context.Context, input StartGameInput) (
 	}
 
 	// シャッフル
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(allPolicyIDs), func(i, j int) {
 		allPolicyIDs[i], allPolicyIDs[j] = allPolicyIDs[j], allPolicyIDs[i]
 	})
@@ -106,10 +104,9 @@ func (uc *StartGameUseCase) Execute(ctx context.Context, input StartGameInput) (
 	room.CurrentPolicyIDs = allPolicyIDs[:currentCount]
 	room.DeckIDs = allPolicyIDs[currentCount:]
 
-	// Votes マップを初期化（プレイヤーIDをキーに）
-	room.Votes = make(map[string]string)
-	for _, p := range players {
-		room.Votes[p.DisplayName] = "" // displayName は実際にはプレイヤーIDを使うべきだが、設計に合わせる
+	// 投票状態をリセット（キーは既にcreate_room/join_room時に設定済み）
+	for userID := range room.Votes {
+		room.Votes[userID] = ""
 	}
 
 	// ゲーム開始

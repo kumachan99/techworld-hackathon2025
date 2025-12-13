@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
 	"github.com/techworld-hackathon/functions/internal/domain/repository"
@@ -58,7 +57,6 @@ func (uc *CreateRoomUseCase) Execute(ctx context.Context, input CreateRoomInput)
 	}
 
 	// ランダムに思想を選択
-	rand.Seed(time.Now().UnixNano())
 	selectedIdeology := ideologies[rand.Intn(len(ideologies))]
 
 	// 新しい部屋を作成

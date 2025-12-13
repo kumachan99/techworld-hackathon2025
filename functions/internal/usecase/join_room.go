@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
 	"github.com/techworld-hackathon/functions/internal/domain/repository"
@@ -106,7 +105,6 @@ func (uc *JoinRoomUseCase) Execute(ctx context.Context, input JoinRoomInput) (*J
 	}
 
 	// ランダムに思想を選択
-	rand.Seed(time.Now().UnixNano())
 	selectedIdeology := availableIdeologies[rand.Intn(len(availableIdeologies))]
 
 	// プレイヤーを作成

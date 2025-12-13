@@ -127,6 +127,28 @@ func (r *PlayerRepository) FindAllByRoomID(ctx context.Context, roomID string) (
 	return players, nil
 }
 
+// FindAllWithIDsByRoomID は指定された部屋の全プレイヤーをIDと共に取得する
+func (r *PlayerRepository) FindAllWithIDsByRoomID(ctx context.Context, roomID string) ([]*repository.PlayerWithID, error) {
+	docs, err := r.client.Collection(roomCollection).Doc(roomID).
+		Collection(playerSubCollection).Documents(ctx).GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	players := make([]*repository.PlayerWithID, 0, len(docs))
+	for _, doc := range docs {
+		var player entity.Player
+		if err := doc.DataTo(&player); err != nil {
+			return nil, err
+		}
+		players = append(players, &repository.PlayerWithID{
+			UserID: doc.Ref.ID,
+			Player: &player,
+		})
+	}
+	return players, nil
+}
+
 // Create はプレイヤーを作成する
 func (r *PlayerRepository) Create(ctx context.Context, roomID, userID string, player *entity.Player) error {
 	_, err := r.client.Collection(roomCollection).Doc(roomID).

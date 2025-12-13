@@ -143,6 +143,5 @@ func (r *Room) CountVotes() string {
 		return candidates[0]
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	return candidates[rand.Intn(len(candidates))]
 }

@@ -2,8 +2,6 @@ package usecase
 
 import (
 	"context"
-	"math/rand"
-	"time"
 
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
 	"github.com/techworld-hackathon/functions/internal/domain/repository"
@@ -47,13 +45,9 @@ func NewResolveVoteUseCase(
 // 3. cityParams に効果を適用
 // 4. isCollapsed をチェック（いずれかのパラメータが 0 以下 or 100 以上）
 // 5. lastResult を設定
-// 6. 次のターンの準備:
-//   - deckIds から3枚を currentPolicyIds に移動
-//   - votes をリセット
-//   - 全プレイヤーの currentVote をリセット
-//
-// 7. status を RESULT に
-// 8. ゲーム終了判定: turn >= maxTurns or isCollapsed → FINISHED
+// 6. status を RESULT に
+// 7. ゲーム終了判定: turn >= maxTurns or isCollapsed → FINISHED
+// ※ 次のターンの準備（カード引き、投票リセット）は next_turn.go で行う
 func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInput) (*ResolveVoteOutput, error) {
 	// 部屋を取得
 	room, err := uc.roomRepo.FindByID(ctx, input.RoomID)
@@ -114,9 +108,6 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 	isGameOver := room.IsGameOver()
 	if isGameOver {
 		room.Finish()
-	} else {
-		// 次のターンの準備
-		uc.prepareNextTurn(room)
 	}
 
 	// 部屋を更新
@@ -124,42 +115,8 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 		return nil, err
 	}
 
-	// 次のターンに進む場合は投票状態をリセット
-	if !isGameOver {
-		if err := uc.playerRepo.ClearAllVotes(ctx, input.RoomID); err != nil {
-			return nil, err
-		}
-	}
-
 	return &ResolveVoteOutput{
 		Room:       room,
 		IsGameOver: isGameOver,
 	}, nil
-}
-
-// prepareNextTurn は次のターンの準備をする
-func (uc *ResolveVoteUseCase) prepareNextTurn(room *entity.Room) {
-	// デッキから3枚引く
-	currentCount := 3
-	if len(room.DeckIDs) < currentCount {
-		currentCount = len(room.DeckIDs)
-	}
-
-	if currentCount > 0 {
-		// シャッフル（同じ順番で出ないように）
-		rand.Seed(time.Now().UnixNano())
-		rand.Shuffle(len(room.DeckIDs), func(i, j int) {
-			room.DeckIDs[i], room.DeckIDs[j] = room.DeckIDs[j], room.DeckIDs[i]
-		})
-
-		room.CurrentPolicyIDs = room.DeckIDs[:currentCount]
-		room.DeckIDs = room.DeckIDs[currentCount:]
-	} else {
-		room.CurrentPolicyIDs = []string{}
-	}
-
-	// 投票リセット
-	for k := range room.Votes {
-		room.Votes[k] = ""
-	}
 }

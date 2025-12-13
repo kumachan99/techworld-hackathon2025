@@ -67,8 +67,8 @@ func (uc *LeaveRoomUseCase) Execute(ctx context.Context, input LeaveRoomInput) (
 	// votesから削除
 	delete(room.Votes, input.UserID)
 
-	// 残りのプレイヤーを取得
-	remainingPlayers, err := uc.playerRepo.FindAllByRoomID(ctx, input.RoomID)
+	// 残りのプレイヤーを取得（IDと共に）
+	remainingPlayers, err := uc.playerRepo.FindAllWithIDsByRoomID(ctx, input.RoomID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,20 +83,15 @@ func (uc *LeaveRoomUseCase) Execute(ctx context.Context, input LeaveRoomInput) (
 
 	// ホストが退出した場合、別のプレイヤーをホストに昇格
 	if player.IsHost {
-		// 最初のプレイヤーをホストに
-		newHost := remainingPlayers[0]
-		newHost.IsHost = true
+		// 最初のプレイヤーを新ホストに
+		newHostData := remainingPlayers[0]
+		newHostData.Player.IsHost = true
 
-		// 新ホストの情報を取得してuserIDを特定
-		for userID := range room.Votes {
-			if userID != input.UserID {
-				if err := uc.playerRepo.Update(ctx, input.RoomID, userID, newHost); err != nil {
-					return nil, err
-				}
-				room.HostID = userID
-				break
-			}
+		// 新ホストのプレイヤー情報を更新
+		if err := uc.playerRepo.Update(ctx, input.RoomID, newHostData.UserID, newHostData.Player); err != nil {
+			return nil, err
 		}
+		room.HostID = newHostData.UserID
 	}
 
 	// 部屋を更新
