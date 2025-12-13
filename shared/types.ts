@@ -132,6 +132,55 @@ export interface PlayerPublic {
 // =============================================================================
 
 // -----------------------------------------------------------------------------
+// POST /api/rooms - 部屋作成
+// -----------------------------------------------------------------------------
+
+/** 部屋作成リクエスト */
+export interface CreateRoomRequest {
+  displayName: string;
+  photoURL?: string;
+}
+
+/** 部屋作成レスポンス */
+export interface CreateRoomResponse {
+  roomId: string;
+  status: RoomStatus;
+}
+
+// -----------------------------------------------------------------------------
+// POST /api/rooms/{roomId}/join - 部屋参加
+// -----------------------------------------------------------------------------
+
+/** 部屋参加リクエスト */
+export interface JoinRoomRequest {
+  displayName: string;
+  photoURL?: string;
+}
+
+/** 部屋参加レスポンス */
+export interface JoinRoomResponse {
+  success: boolean;
+}
+
+// -----------------------------------------------------------------------------
+// POST /api/rooms/{roomId}/leave - 部屋退出
+// -----------------------------------------------------------------------------
+
+/** 部屋退出レスポンス */
+export interface LeaveRoomResponse {
+  success: boolean;
+}
+
+// -----------------------------------------------------------------------------
+// POST /api/rooms/{roomId}/ready - Ready状態トグル
+// -----------------------------------------------------------------------------
+
+/** Ready状態レスポンス */
+export interface ReadyResponse {
+  isReady: boolean;
+}
+
+// -----------------------------------------------------------------------------
 // POST /api/rooms/{roomId}/start - ゲーム開始
 // -----------------------------------------------------------------------------
 
@@ -140,6 +189,20 @@ export interface StartGameResponse {
   status: RoomStatus;
   turn: number;
   currentPolicyIds: string[];
+}
+
+// -----------------------------------------------------------------------------
+// POST /api/rooms/{roomId}/vote - 投票
+// -----------------------------------------------------------------------------
+
+/** 投票リクエスト */
+export interface VoteRequest {
+  policyId: string;
+}
+
+/** 投票レスポンス */
+export interface VoteResponse {
+  success: boolean;
 }
 
 // -----------------------------------------------------------------------------
@@ -155,7 +218,17 @@ export interface ResolveVoteResponse {
 }
 
 // -----------------------------------------------------------------------------
-// POST /api/rooms/{roomId}/petitions - AI陳情
+// POST /api/rooms/{roomId}/next - 次ターンへ
+// -----------------------------------------------------------------------------
+
+/** 次ターンレスポンス */
+export interface NextTurnResponse {
+  status: RoomStatus;
+  turn: number;
+}
+
+// -----------------------------------------------------------------------------
+// POST /api/rooms/{roomId}/petition - AI陳情
 // -----------------------------------------------------------------------------
 
 /** 陳情リクエスト */
@@ -170,34 +243,13 @@ export interface PetitionResponse {
   message: string;
 }
 
-// =============================================================================
-// Firestore 直接操作用の型（フロントエンド参照用）
-// =============================================================================
+// -----------------------------------------------------------------------------
+// 共通エラーレスポンス
+// -----------------------------------------------------------------------------
 
-/** 部屋作成時の初期データ */
-export interface CreateRoomData {
-  hostId: string;
-  status: 'LOBBY';
-  turn: 0;
-  maxTurns: 10;
-  createdAt: unknown;  // serverTimestamp()
-  cityParams: CityParams;
-  isCollapsed: false;
-  currentPolicyIds: [];
-  deckIds: [];
-  votes: Record<string, null>;
-  lastResult: null;
-}
-
-/** プレイヤー作成時の初期データ */
-export interface CreatePlayerData {
-  displayName: string;
-  photoURL: string;
-  isHost: boolean;
-  isReady: false;
-  isPetitionUsed: false;
-  ideology: MasterIdeology;
-  currentVote: '';
+/** APIエラーレスポンス */
+export interface ApiErrorResponse {
+  error: string;
 }
 
 // =============================================================================

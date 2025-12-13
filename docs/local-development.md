@@ -42,18 +42,18 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GOOGLE_CLOUD_PROJECT=demo-project go run 
 | Go API | http://127.0.0.1:8081 |
 | Health Check | http://127.0.0.1:8081/health |
 
-## APIテスト
+## マスターデータの投入
 
-### ヘルスチェック
+### seedスクリプトを使用
 
 ```bash
-curl http://127.0.0.1:8081/health
-# => OK
+cd scripts
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GOOGLE_CLOUD_PROJECT=demo-project go run seed.go
 ```
 
-### テストデータの投入
+### 手動投入（curl）
 
-#### 1. 思想マスター
+#### 思想マスター
 
 ```bash
 curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)/documents/master_ideologies?documentId=ideology_environmentalist" \
@@ -79,7 +79,7 @@ curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)
   }'
 ```
 
-#### 2. 政策マスター
+#### 政策マスター
 
 ```bash
 curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)/documents/master_policies?documentId=policy_001" \
@@ -106,68 +106,75 @@ curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)
   }'
 ```
 
-#### 3. ルーム作成
+---
+
+## APIテスト
+
+### ヘルスチェック
 
 ```bash
-curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)/documents/rooms?documentId=test-room-001" \
+curl http://127.0.0.1:8081/health
+# => OK
+```
+
+### 部屋作成 API
+
+```bash
+curl -X POST "http://127.0.0.1:8081/api/rooms" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
   -d '{
-    "fields": {
-      "hostId": {"stringValue": "user_host"},
-      "status": {"stringValue": "LOBBY"},
-      "turn": {"integerValue": "1"},
-      "maxTurns": {"integerValue": "5"},
-      "cityParams": {
-        "mapValue": {
-          "fields": {
-            "economy": {"integerValue": "50"},
-            "welfare": {"integerValue": "50"},
-            "education": {"integerValue": "50"},
-            "environment": {"integerValue": "50"},
-            "security": {"integerValue": "50"},
-            "humanRights": {"integerValue": "50"}
-          }
-        }
-      },
-      "isCollapsed": {"booleanValue": false},
-      "currentPolicyIds": {"arrayValue": {"values": []}},
-      "deckIds": {
-        "arrayValue": {
-          "values": [
-            {"stringValue": "policy_001"},
-            {"stringValue": "policy_002"},
-            {"stringValue": "policy_003"}
-          ]
-        }
-      },
-      "votes": {"mapValue": {"fields": {}}}
-    }
+    "displayName": "ホスト太郎"
   }'
 ```
 
-#### 4. プレイヤー作成
+レスポンス例:
+```json
+{
+  "roomId": "abc123xyz",
+  "status": "LOBBY"
+}
+```
+
+### 部屋参加 API
 
 ```bash
-curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)/documents/rooms/test-room-001/players?documentId=user_host" \
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/join" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
   -d '{
-    "fields": {
-      "displayName": {"stringValue": "ホスト太郎"},
-      "isHost": {"booleanValue": true},
-      "isReady": {"booleanValue": true},
-      "isPetitionUsed": {"booleanValue": false},
-      "currentVote": {"stringValue": ""}
-    }
+    "displayName": "プレイヤー花子"
   }'
 ```
 
-### APIエンドポイントのテスト
+レスポンス例:
+```json
+{
+  "success": true
+}
+```
 
-#### ゲーム開始 API
+### Ready状態トグル API
 
 ```bash
-curl -X POST "http://127.0.0.1:8081/api/rooms/test-room-001/start" \
-  -H "Content-Type: application/json"
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/ready" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+```
+
+レスポンス例:
+```json
+{
+  "isReady": true
+}
+```
+
+### ゲーム開始 API
+
+```bash
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/start" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 ```
 
 レスポンス例:
@@ -179,29 +186,30 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/test-room-001/start" \
 }
 ```
 
-#### 投票集計 API
-
-投票データをセットしてから実行:
+### 投票 API
 
 ```bash
-# 投票を設定（Firestoreに直接）
-curl -X PATCH "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)/documents/rooms/test-room-001" \
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
   -d '{
-    "fields": {
-      "votes": {
-        "mapValue": {
-          "fields": {
-            "user_host": {"stringValue": "policy_001"}
-          }
-        }
-      }
-    }
+    "policyId": "policy_001"
   }'
+```
 
-# 投票集計を実行
-curl -X POST "http://127.0.0.1:8081/api/rooms/test-room-001/resolve" \
-  -H "Content-Type: application/json"
+レスポンス例:
+```json
+{
+  "success": true
+}
+```
+
+### 投票集計 API
+
+```bash
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/resolve" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 ```
 
 レスポンス例:
@@ -220,15 +228,72 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/test-room-001/resolve" \
   "lastResult": {
     "passedPolicyId": "policy_001",
     "passedPolicyTitle": "経済政策1",
-    "actualEffects": {...},
-    "newsFlash": "【速報】政策が可決されました！"
+    "actualEffects": { "economy": 10, "welfare": -5, ... },
+    "newsFlash": "【速報】政策が可決されました！",
+    "voteDetails": { "user1": "policy_001" }
   }
 }
 ```
 
+### 次ターン API
+
+```bash
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/next" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+```
+
+レスポンス例:
+```json
+{
+  "status": "VOTING",
+  "turn": 2
+}
+```
+
+### AI陳情 API
+
+```bash
+curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/petition" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
+  -d '{
+    "text": "週休3日制を導入したい"
+  }'
+```
+
+レスポンス例:
+```json
+{
+  "approved": true,
+  "policyId": "petition_abc123",
+  "message": "政策が承認されました"
+}
+```
+
+---
+
+## ローカルでのトークン取得（開発用）
+
+Firebase Authentication のIDトークンを取得するには:
+
+```typescript
+import { getAuth } from 'firebase/auth';
+
+const auth = getAuth();
+const token = await auth.currentUser?.getIdToken();
+console.log(token);
+```
+
+または、Firebase Emulator UI (http://127.0.0.1:4040) から認証をセットアップできます。
+
+---
+
 ## Emulator UIでのデータ確認
 
 ブラウザで http://127.0.0.1:4040 を開くと、Firestoreエミュレータに保存されたデータを確認・編集できます。
+
+---
 
 ## トラブルシューティング
 
@@ -260,4 +325,15 @@ java -version
 ```bash
 echo $FIRESTORE_EMULATOR_HOST  # => 127.0.0.1:8080
 echo $GOOGLE_CLOUD_PROJECT     # => demo-project
+```
+
+### 認証エラー
+
+ローカル開発時は、Firebase Emulator を使用するか、テスト用に認証をバイパスする設定が必要です。
+
+```go
+// 開発環境での認証スキップ例
+if os.Getenv("SKIP_AUTH") == "true" {
+    // 認証をスキップ
+}
 ```
