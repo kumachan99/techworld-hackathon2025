@@ -60,7 +60,7 @@ curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)
   -H "Content-Type: application/json" \
   -d '{
     "fields": {
-      "id": {"stringValue": "ideology_environmentalist"},
+      "ideologyId": {"stringValue": "ideology_environmentalist"},
       "name": {"stringValue": "環境主義者"},
       "description": {"stringValue": "自然環境の保護を最優先とする思想"},
       "coefficients": {
@@ -86,7 +86,7 @@ curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)
   -H "Content-Type: application/json" \
   -d '{
     "fields": {
-      "id": {"stringValue": "policy_001"},
+      "policyId": {"stringValue": "policy_001"},
       "title": {"stringValue": "経済政策1"},
       "description": {"stringValue": "テスト政策の説明"},
       "newsFlash": {"stringValue": "【速報】政策が可決されました！"},
@@ -120,9 +120,10 @@ curl http://127.0.0.1:8081/health
 ### 部屋作成 API
 
 ```bash
+# ローカル開発時はX-User-IDヘッダーを使用
 curl -X POST "http://127.0.0.1:8081/api/rooms" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
+  -H "X-User-ID: user123" \
   -d '{
     "displayName": "ホスト太郎"
   }'
@@ -141,7 +142,7 @@ curl -X POST "http://127.0.0.1:8081/api/rooms" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/join" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
+  -H "X-User-ID: user456" \
   -d '{
     "displayName": "プレイヤー花子"
   }'
@@ -159,7 +160,7 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/join" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/ready" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+  -H "X-User-ID: user456"
 ```
 
 レスポンス例:
@@ -172,9 +173,10 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/ready" \
 ### ゲーム開始 API
 
 ```bash
+# ホストのみ実行可能
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/start" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+  -H "X-User-ID: user123"
 ```
 
 レスポンス例:
@@ -191,7 +193,7 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/start" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
+  -H "X-User-ID: user123" \
   -d '{
     "policyId": "policy_001"
   }'
@@ -207,9 +209,10 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/vote" \
 ### 投票集計 API
 
 ```bash
+# ホストのみ実行可能
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/resolve" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+  -H "X-User-ID: user123"
 ```
 
 レスポンス例:
@@ -238,9 +241,10 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/resolve" \
 ### 次ターン API
 
 ```bash
+# ホストのみ実行可能
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/next" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+  -H "X-User-ID: user123"
 ```
 
 レスポンス例:
@@ -256,7 +260,7 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/next" \
 ```bash
 curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/petition" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
+  -H "X-User-ID: user123" \
   -d '{
     "text": "週休3日制を導入したい"
   }'
@@ -273,7 +277,20 @@ curl -X POST "http://127.0.0.1:8081/api/rooms/{roomId}/petition" \
 
 ---
 
-## ローカルでのトークン取得（開発用）
+## ローカルでの認証（開発用）
+
+### 簡易認証（X-User-IDヘッダー）
+
+ローカル開発時は、`X-User-ID` ヘッダーにユーザーIDを指定することで認証をバイパスできます。
+
+```bash
+curl -X POST "http://127.0.0.1:8081/api/rooms" \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: test-user-001" \
+  -d '{"displayName": "テストユーザー"}'
+```
+
+### Firebase Authentication（本番環境）
 
 Firebase Authentication のIDトークンを取得するには:
 

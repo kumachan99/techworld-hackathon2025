@@ -36,9 +36,10 @@ export type IdeologyCoefficients = CityParams;
  * パス: master_policies/{policyId}
  *
  * 各政策は effects で6パラメータ全てに影響を与えます。
+ * policyId はドキュメントIDと同一
  */
 export interface MasterPolicy {
-  id: string;
+  policyId: string;
   title: string;
   description: string;
   newsFlash: string;
@@ -52,9 +53,10 @@ export interface MasterPolicy {
 /**
  * 思想マスター
  * パス: master_ideologies/{ideologyId}
+ * ideologyId はドキュメントIDと同一
  */
 export interface MasterIdeology {
-  id: string;
+  ideologyId: string;
   name: string;
   description: string;
   coefficients: IdeologyCoefficients;
@@ -81,7 +83,7 @@ export interface Room {
   isCollapsed: boolean;
   currentPolicyIds: string[];           // ★ IDのみ。マスターから引いて表示
   deckIds: string[];                    // 山札
-  votes: Record<string, string | null>; // { oderId: policyId | null }
+  votes: Record<string, string | null>; // { userId: policyId | null }
   lastResult: VoteResult | null;
 }
 
@@ -91,7 +93,7 @@ export interface VoteResult {
   passedPolicyTitle: string;
   actualEffects: PolicyEffects;  // ここで効果を開示
   newsFlash: string;
-  voteDetails: Record<string, string>;  // { oderId: policyId }
+  voteDetails: Record<string, string>;  // { userId: policyId }
 }
 
 // =============================================================================
@@ -100,7 +102,7 @@ export interface VoteResult {
 
 /**
  * プレイヤー
- * パス: rooms/{roomId}/players/{oderId}
+ * パス: rooms/{roomId}/players/{userId}
  *
  * ⚠️ ideology, currentVote は Security Rules で本人以外読み取り禁止
  * 投票済みかは Room.votes の keys を監視して判断
@@ -258,7 +260,7 @@ export interface ApiErrorResponse {
 
 /** プレイヤースコア（ゲーム終了後に表示） */
 export interface PlayerScore {
-  oderId: string;
+  userId: string;
   displayName: string;
   ideology: MasterIdeology;  // ゲーム終了後に公開
   score: number;

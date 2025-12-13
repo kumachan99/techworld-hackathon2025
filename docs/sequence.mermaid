@@ -18,8 +18,8 @@ sequenceDiagram
     FS-->>FE: 完了
 
     Player->>FE: 部屋IDを入力して参加
-    FE->>FS: setDoc(rooms/{roomId}/players/{oderId})<br/>{ displayName, ideology, isHost: false, isReady: false }
-    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{oderId}: null }
+    FE->>FS: setDoc(rooms/{roomId}/players/{userId})<br/>{ displayName, ideology, isHost: false, isReady: false }
+    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{userId}: null }
     FS-->>FE: 完了
 
     FE->>FS: onSnapshot(rooms/{roomId})
@@ -29,7 +29,7 @@ sequenceDiagram
     FE-->>Player: プレイヤー一覧更新
 
     Player->>FE: Ready ボタン
-    FE->>FS: updateDoc(players/{oderId})<br/>{ isReady: true }
+    FE->>FS: updateDoc(players/{userId})<br/>{ isReady: true }
     FS-->>FE: onSnapshot通知
     FE-->>Host: Player が Ready になった
     FE-->>Player: Ready状態反映
@@ -63,8 +63,8 @@ sequenceDiagram
     FE-->>Player: 3つの政策カード表示
 
     Player->>FE: 政策Aに投票
-    FE->>FS: updateDoc(players/{oderId})<br/>{ currentVote: A, hasVoted: true }
-    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{oderId}: A }
+    FE->>FS: updateDoc(players/{userId})<br/>{ currentVote: A, hasVoted: true }
+    FE->>FS: updateDoc(rooms/{roomId})<br/>{ votes.{userId}: A }
     FS-->>FE: onSnapshot通知
     FE-->>Host: Player が投票完了
     FE-->>Player: 投票完了表示
@@ -86,7 +86,7 @@ sequenceDiagram
         alt 承認時
             CR->>FS: master_policies.add(newPolicy)
             CR->>FS: rooms/{roomId}.deckIds.push(newPolicyId)
-            CR->>FS: players/{oderId}.isPetitionUsed = true
+            CR->>FS: players/{userId}.isPetitionUsed = true
             CR-->>FE: { approved: true, policyId, message }
             FE-->>Player: 陳情承認！
         else 却下時

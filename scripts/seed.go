@@ -39,7 +39,7 @@ type Effects struct {
 
 // Policy は政策データ
 type Policy struct {
-	ID          string  `yaml:"id"`
+	PolicyID    string  `yaml:"policyId"`
 	Title       string  `yaml:"title"`
 	Description string  `yaml:"description"`
 	NewsFlash   string  `yaml:"newsFlash"`
@@ -63,7 +63,7 @@ type Coefficients struct {
 
 // Ideology は思想データ
 type Ideology struct {
-	ID           string       `yaml:"id"`
+	IdeologyID   string       `yaml:"ideologyId"`
 	Name         string       `yaml:"name"`
 	Description  string       `yaml:"description"`
 	Coefficients Coefficients `yaml:"coefficients"`
@@ -141,9 +141,9 @@ func seedPolicies(ctx context.Context, client *firestore.Client, dataDir string)
 	// Firestore にバッチ書き込み
 	batch := client.Batch()
 	for _, policy := range file.Policies {
-		docRef := client.Collection("master_policies").Doc(policy.ID)
+		docRef := client.Collection("master_policies").Doc(policy.PolicyID)
 		batch.Set(docRef, map[string]interface{}{
-			"id":          policy.ID,
+			"policyId":    policy.PolicyID,
 			"title":       policy.Title,
 			"description": policy.Description,
 			"newsFlash":   policy.NewsFlash,
@@ -187,9 +187,9 @@ func seedIdeologies(ctx context.Context, client *firestore.Client, dataDir strin
 	// Firestore にバッチ書き込み
 	batch := client.Batch()
 	for _, ideology := range file.Ideologies {
-		docRef := client.Collection("master_ideologies").Doc(ideology.ID)
+		docRef := client.Collection("master_ideologies").Doc(ideology.IdeologyID)
 		batch.Set(docRef, map[string]interface{}{
-			"id":          ideology.ID,
+			"ideologyId":  ideology.IdeologyID,
 			"name":        ideology.Name,
 			"description": ideology.Description,
 			"coefficients": map[string]int{

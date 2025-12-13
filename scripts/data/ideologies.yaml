@@ -4,7 +4,7 @@
 # 負の値: その項目が高いとスコアダウン
 
 ideologies:
-  - id: ideology_capitalist
+  - ideologyId: ideology_capitalist
     name: 新自由主義者
     description: 経済成長こそが市民の幸福につながると信じる。規制緩和と市場原理を重視。
     coefficients:
@@ -15,7 +15,7 @@ ideologies:
       security: 1
       humanRights: 0
 
-  - id: ideology_socialist
+  - ideologyId: ideology_socialist
     name: 社会民主主義者
     description: 全ての市民に平等な福祉を提供することが最優先。格差是正を目指す。
     coefficients:
@@ -26,7 +26,7 @@ ideologies:
       security: 0
       humanRights: 1
 
-  - id: ideology_environmentalist
+  - ideologyId: ideology_environmentalist
     name: 環境保護主義者
     description: 持続可能な環境なくして未来はない。自然との共生を最重視。
     coefficients:
@@ -37,7 +37,7 @@ ideologies:
       security: 0
       humanRights: 1
 
-  - id: ideology_authoritarian
+  - ideologyId: ideology_authoritarian
     name: 秩序重視派
     description: 安全な街こそが全ての基盤。強い統治による社会の安定を求める。
     coefficients:
@@ -48,7 +48,7 @@ ideologies:
       security: 3
       humanRights: -1
 
-  - id: ideology_libertarian
+  - ideologyId: ideology_libertarian
     name: 自由至上主義者
     description: 個人の自由と権利を何よりも尊重。政府の介入を最小限に。
     coefficients:
@@ -59,7 +59,7 @@ ideologies:
       security: -1
       humanRights: 3
 
-  - id: ideology_technocrat
+  - ideologyId: ideology_technocrat
     name: テクノクラート
     description: 教育と科学技術の発展が社会を前進させる。知識こそ力。
     coefficients:

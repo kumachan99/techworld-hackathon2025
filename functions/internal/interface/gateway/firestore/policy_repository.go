@@ -38,7 +38,7 @@ func (r *PolicyRepository) GetAll(ctx context.Context) ([]entity.MasterPolicy, e
 		if err := doc.DataTo(&policy); err != nil {
 			return nil, err
 		}
-		policy.ID = doc.Ref.ID
+		policy.PolicyID = doc.Ref.ID
 		policies = append(policies, policy)
 	}
 
@@ -59,7 +59,7 @@ func (r *PolicyRepository) FindByID(ctx context.Context, id string) (*entity.Mas
 	if err := doc.DataTo(&policy); err != nil {
 		return nil, err
 	}
-	policy.ID = doc.Ref.ID
+	policy.PolicyID = doc.Ref.ID
 	return &policy, nil
 }
 

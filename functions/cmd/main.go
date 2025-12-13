@@ -67,26 +67,62 @@ func initializeHandler(firestoreClient *firestore.Client) *handler.Handler {
 	roomRepo := firestoreGateway.NewRoomRepository(firestoreClient)
 	playerRepo := firestoreGateway.NewPlayerRepository(firestoreClient)
 	policyRepo := firestoreGateway.NewPolicyRepository(firestoreClient)
+	ideologyRepo := firestoreGateway.NewIdeologyRepository(firestoreClient)
 
 	// AI Client
 	openaiAPIKey := os.Getenv("OPENAI_API_KEY")
 	aiClient := ai.NewOpenAIClient(openaiAPIKey)
 
 	// UseCase
+	createRoomUC := usecase.NewCreateRoomUseCase(roomRepo, playerRepo, ideologyRepo)
+	joinRoomUC := usecase.NewJoinRoomUseCase(roomRepo, playerRepo, ideologyRepo)
+	leaveRoomUC := usecase.NewLeaveRoomUseCase(roomRepo, playerRepo)
+	toggleReadyUC := usecase.NewToggleReadyUseCase(roomRepo, playerRepo)
 	startGameUC := usecase.NewStartGameUseCase(roomRepo, playerRepo, policyRepo)
+	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo)
 	resolveVoteUC := usecase.NewResolveVoteUseCase(roomRepo, playerRepo, policyRepo)
+	nextTurnUC := usecase.NewNextTurnUseCase(roomRepo, playerRepo)
 	submitPetitionUC := usecase.NewSubmitPetitionUseCase(roomRepo, playerRepo, policyRepo, aiClient)
 
 	// Handler
-	return handler.NewHandler(startGameUC, resolveVoteUC, submitPetitionUC)
+	return handler.NewHandler(
+		createRoomUC,
+		joinRoomUC,
+		leaveRoomUC,
+		toggleReadyUC,
+		startGameUC,
+		voteUC,
+		resolveVoteUC,
+		nextTurnUC,
+		submitPetitionUC,
+	)
 }
 
 // setupRoutes はルーティングを設定する
 func setupRoutes(mux *http.ServeMux, h *handler.Handler) {
 	// API endpoints
-	// POST /api/rooms/{roomId}/start - ゲーム開始
-	// POST /api/rooms/{roomId}/resolve - 投票集計
-	// POST /api/rooms/{roomId}/petitions - AI陳情
+	// POST /api/rooms              - 部屋作成
+	// POST /api/rooms/{roomId}/join     - 部屋参加
+	// POST /api/rooms/{roomId}/leave    - 部屋退出
+	// POST /api/rooms/{roomId}/ready    - Ready状態トグル
+	// POST /api/rooms/{roomId}/start    - ゲーム開始
+	// POST /api/rooms/{roomId}/vote     - 投票
+	// POST /api/rooms/{roomId}/resolve  - 投票集計
+	// POST /api/rooms/{roomId}/next     - 次ターンへ
+	// POST /api/rooms/{roomId}/petition - AI陳情
+
+	mux.HandleFunc("/api/rooms", func(w http.ResponseWriter, r *http.Request) {
+		if handler.HandleCORS(w, r) {
+			return
+		}
+		// /api/rooms のみ（サブパスなし）
+		if r.URL.Path == "/api/rooms" {
+			h.CreateRoom(w, r)
+			return
+		}
+		http.NotFound(w, r)
+	})
+
 	mux.HandleFunc("/api/rooms/", func(w http.ResponseWriter, r *http.Request) {
 		if handler.HandleCORS(w, r) {
 			return
@@ -94,11 +130,21 @@ func setupRoutes(mux *http.ServeMux, h *handler.Handler) {
 
 		path := r.URL.Path
 		switch {
+		case strings.HasSuffix(path, "/join"):
+			h.JoinRoom(w, r)
+		case strings.HasSuffix(path, "/leave"):
+			h.LeaveRoom(w, r)
+		case strings.HasSuffix(path, "/ready"):
+			h.ToggleReady(w, r)
 		case strings.HasSuffix(path, "/start"):
 			h.StartGame(w, r)
+		case strings.HasSuffix(path, "/vote"):
+			h.Vote(w, r)
 		case strings.HasSuffix(path, "/resolve"):
 			h.ResolveVote(w, r)
-		case strings.HasSuffix(path, "/petitions"):
+		case strings.HasSuffix(path, "/next"):
+			h.NextTurn(w, r)
+		case strings.HasSuffix(path, "/petition"):
 			h.SubmitPetition(w, r)
 		default:
 			http.NotFound(w, r)

@@ -11,7 +11,7 @@
 
   "_comment_secret": "以下は本人のみ読み取り可（Security Rulesで制御）",
   "ideology": {
-    "id": "ideology_environmentalist",
+    "ideologyId": "ideology_environmentalist",
     "name": "環境主義者",
     "description": "自然環境の保護を最優先とする思想",
     "coefficients": {

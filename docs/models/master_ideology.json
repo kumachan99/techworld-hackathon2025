@@ -2,7 +2,7 @@
   "_path": "master_ideologies/{ideologyId}",
   "_description": "思想マスター",
 
-  "id": "ideology_environmentalist",
+  "ideologyId": "ideology_environmentalist",
   "name": "環境主義者",
   "description": "自然環境の保護を最優先とする思想。環境パラメータが高いほど高得点。",
 

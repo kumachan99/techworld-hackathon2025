@@ -27,7 +27,7 @@ type Room struct {
 	IsCollapsed      bool              `json:"isCollapsed" firestore:"isCollapsed"`
 	CurrentPolicyIDs []string          `json:"currentPolicyIds" firestore:"currentPolicyIds"` // IDのみ
 	DeckIDs          []string          `json:"deckIds" firestore:"deckIds"`                   // 山札
-	Votes            map[string]string `json:"votes" firestore:"votes"`                       // { oderId: policyId }
+	Votes            map[string]string `json:"votes" firestore:"votes"`                       // { userId: policyId }
 	LastResult       *VoteResult       `json:"lastResult" firestore:"lastResult"`
 }
 

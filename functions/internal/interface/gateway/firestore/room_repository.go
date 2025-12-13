@@ -43,9 +43,38 @@ func (r *RoomRepository) FindByID(ctx context.Context, roomID string) (*entity.R
 	return &room, nil
 }
 
+// Create は新しい部屋を作成する
+func (r *RoomRepository) Create(ctx context.Context, room *entity.Room) (string, error) {
+	docRef, _, err := r.client.Collection(roomCollection).Add(ctx, room)
+	if err != nil {
+		return "", err
+	}
+	return docRef.ID, nil
+}
+
 // Update は部屋の情報を更新する
 func (r *RoomRepository) Update(ctx context.Context, roomID string, room *entity.Room) error {
 	_, err := r.client.Collection(roomCollection).Doc(roomID).Set(ctx, room)
+	return err
+}
+
+// Delete は部屋を削除する
+func (r *RoomRepository) Delete(ctx context.Context, roomID string) error {
+	// サブコレクションのプレイヤーも削除
+	docs, err := r.client.Collection(roomCollection).Doc(roomID).
+		Collection(playerSubCollection).Documents(ctx).GetAll()
+	if err != nil {
+		return err
+	}
+
+	batch := r.client.Batch()
+	for _, doc := range docs {
+		batch.Delete(doc.Ref)
+	}
+	// ルームドキュメントも削除
+	batch.Delete(r.client.Collection(roomCollection).Doc(roomID))
+
+	_, err = batch.Commit(ctx)
 	return err
 }
 
@@ -98,11 +127,35 @@ func (r *PlayerRepository) FindAllByRoomID(ctx context.Context, roomID string) (
 	return players, nil
 }
 
+// Create はプレイヤーを作成する
+func (r *PlayerRepository) Create(ctx context.Context, roomID, userID string, player *entity.Player) error {
+	_, err := r.client.Collection(roomCollection).Doc(roomID).
+		Collection(playerSubCollection).Doc(userID).Set(ctx, player)
+	return err
+}
+
 // Update はプレイヤー情報を更新する
 func (r *PlayerRepository) Update(ctx context.Context, roomID, userID string, player *entity.Player) error {
 	_, err := r.client.Collection(roomCollection).Doc(roomID).
 		Collection(playerSubCollection).Doc(userID).Set(ctx, player)
 	return err
+}
+
+// Delete はプレイヤーを削除する
+func (r *PlayerRepository) Delete(ctx context.Context, roomID, userID string) error {
+	_, err := r.client.Collection(roomCollection).Doc(roomID).
+		Collection(playerSubCollection).Doc(userID).Delete(ctx)
+	return err
+}
+
+// CountByRoomID は指定された部屋のプレイヤー数を取得する
+func (r *PlayerRepository) CountByRoomID(ctx context.Context, roomID string) (int, error) {
+	docs, err := r.client.Collection(roomCollection).Doc(roomID).
+		Collection(playerSubCollection).Documents(ctx).GetAll()
+	if err != nil {
+		return 0, err
+	}
+	return len(docs), nil
 }
 
 // ClearAllVotes は全プレイヤーの投票状態をリセットする

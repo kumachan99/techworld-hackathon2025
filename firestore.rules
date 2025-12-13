@@ -50,7 +50,7 @@ service cloud.firestore {
       // -----------------------------------------------------------------------
       // players サブコレクション
       // -----------------------------------------------------------------------
-      match /players/{oderId} {
+      match /players/{userId} {
         // 🌐 公開フィールドのみ読み取り可能
         // ⚠️ 注意: Firestore はフィールドレベルの読み取り制御ができないため、
         //    本番環境では Cloud Functions 経由で秘匿フィールドを除外して返す必要がある
@@ -59,9 +59,9 @@ service cloud.firestore {
         // - 読み取りは全員可能（クライアント側で他人の ideology/currentVote を表示しない）
         // - 書き込みは本人のみ
         allow read: if isAuthenticated();
-        allow create: if isOwner(oderId);
-        allow update: if isOwner(oderId);
-        allow delete: if isOwner(oderId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
       }
     }
   }

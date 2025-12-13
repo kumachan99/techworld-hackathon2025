@@ -2,8 +2,9 @@ package entity
 
 // MasterIdeology は思想マスターを表す
 // パス: master_ideologies/{ideologyId}
+// IdeologyID はドキュメントIDと同一
 type MasterIdeology struct {
-	ID           string             `json:"id" firestore:"id"`
+	IdeologyID   string             `json:"ideologyId" firestore:"ideologyId"`
 	Name         string             `json:"name" firestore:"name"`
 	Description  string             `json:"description" firestore:"description"`
 	Coefficients map[string]float64 `json:"coefficients" firestore:"coefficients"` // スコア計算用係数
@@ -25,7 +26,7 @@ func (i *MasterIdeology) CalculateScore(cityParams *CityParams) int {
 func GetDefaultIdeologies() []MasterIdeology {
 	return []MasterIdeology{
 		{
-			ID:          "ideology_capitalist",
+			IdeologyID:  "ideology_capitalist",
 			Name:        "新自由主義者",
 			Description: "経済成長こそが市民の幸福につながると信じる。規制緩和と市場原理を重視。",
 			Coefficients: map[string]float64{
@@ -38,7 +39,7 @@ func GetDefaultIdeologies() []MasterIdeology {
 			},
 		},
 		{
-			ID:          "ideology_socialist",
+			IdeologyID:  "ideology_socialist",
 			Name:        "社会民主主義者",
 			Description: "全ての市民に平等な福祉を提供することが最優先。格差是正を目指す。",
 			Coefficients: map[string]float64{
@@ -51,7 +52,7 @@ func GetDefaultIdeologies() []MasterIdeology {
 			},
 		},
 		{
-			ID:          "ideology_environmentalist",
+			IdeologyID:  "ideology_environmentalist",
 			Name:        "環境保護主義者",
 			Description: "持続可能な環境なくして未来はない。自然との共生を最重視。",
 			Coefficients: map[string]float64{
@@ -64,7 +65,7 @@ func GetDefaultIdeologies() []MasterIdeology {
 			},
 		},
 		{
-			ID:          "ideology_authoritarian",
+			IdeologyID:  "ideology_authoritarian",
 			Name:        "秩序重視派",
 			Description: "安全な街こそが全ての基盤。強い統治による社会の安定を求める。",
 			Coefficients: map[string]float64{
@@ -77,7 +78,7 @@ func GetDefaultIdeologies() []MasterIdeology {
 			},
 		},
 		{
-			ID:          "ideology_libertarian",
+			IdeologyID:  "ideology_libertarian",
 			Name:        "自由至上主義者",
 			Description: "個人の自由と権利を何よりも尊重。政府の介入を最小限に。",
 			Coefficients: map[string]float64{
@@ -90,7 +91,7 @@ func GetDefaultIdeologies() []MasterIdeology {
 			},
 		},
 		{
-			ID:          "ideology_technocrat",
+			IdeologyID:  "ideology_technocrat",
 			Name:        "テクノクラート",
 			Description: "教育と科学技術の発展が社会を前進させる。知識こそ力。",
 			Coefficients: map[string]float64{
@@ -108,7 +109,7 @@ func GetDefaultIdeologies() []MasterIdeology {
 // GetIdeologyByID は指定されたIDの思想を返す
 func GetIdeologyByID(id string) *MasterIdeology {
 	for _, ideology := range GetDefaultIdeologies() {
-		if ideology.ID == id {
+		if ideology.IdeologyID == id {
 			return &ideology
 		}
 	}

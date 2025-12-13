@@ -12,6 +12,7 @@ import (
 // StartGameInput はゲーム開始の入力
 type StartGameInput struct {
 	RoomID string
+	UserID string // ホストチェック用
 }
 
 // StartGameOutput はゲーム開始の出力
@@ -41,11 +42,13 @@ func NewStartGameUseCase(
 }
 
 // Execute はゲームを開始する
-// 1. 全政策IDを取得してシャッフル → deckIds
-// 2. 先頭3枚を currentPolicyIds に
-// 3. deckIds から3枚を削除
-// 4. status を VOTING に、turn を 1 に
-// 5. 全プレイヤーの投票状態をリセット
+// 1. ホストであることを確認
+// 2. 全員Readyであることを確認
+// 3. 全政策IDを取得してシャッフル → deckIds
+// 4. 先頭3枚を currentPolicyIds に
+// 5. deckIds から3枚を削除
+// 6. status を VOTING に、turn を 1 に
+// 7. 全プレイヤーの投票状態をリセット
 func (uc *StartGameUseCase) Execute(ctx context.Context, input StartGameInput) (*StartGameOutput, error) {
 	// 部屋を取得
 	room, err := uc.roomRepo.FindByID(ctx, input.RoomID)
@@ -54,6 +57,11 @@ func (uc *StartGameUseCase) Execute(ctx context.Context, input StartGameInput) (
 	}
 	if room == nil {
 		return nil, entity.ErrRoomNotFound
+	}
+
+	// ホストチェック
+	if room.HostID != input.UserID {
+		return nil, entity.ErrNotHost
 	}
 
 	// LOBBY状態でないとスタートできない
@@ -68,6 +76,13 @@ func (uc *StartGameUseCase) Execute(ctx context.Context, input StartGameInput) (
 	}
 	if !room.CanStart(len(players)) {
 		return nil, entity.ErrNotEnoughPlayers
+	}
+
+	// 全員Readyかチェック
+	for _, p := range players {
+		if !p.IsReady && !p.IsHost { // ホストはReady不要
+			return nil, entity.ErrNotAllReady
+		}
 	}
 
 	// 全政策IDを取得

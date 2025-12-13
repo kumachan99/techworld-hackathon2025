@@ -2,8 +2,7 @@
   "_path": "master_policies/{policyId}",
   "_description": "政策カードマスター",
 
-  "id": "policy_005",
-  "category": "Education",
+  "policyId": "policy_005",
   "title": "教育無償化",
   "description": "幼稚園から大学まで、全ての教育費用を無償化する",
   "newsFlash": "【朗報】教育無償化で進学率過去最高に！予算超過で他施策に影響も",

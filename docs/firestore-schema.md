@@ -59,7 +59,7 @@ ROOT
 
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
-| id | string | 政策ID |
+| (policyId) | string | ドキュメントID |
 | title | string | タイトル |
 | description | string | 説明文 |
 | newsFlash | string | 結果発表時のニュース |
@@ -73,7 +73,7 @@ ROOT
 
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
-| id | string | 思想ID |
+| (ideologyId) | string | ドキュメントID |
 | name | string | 思想名 |
 | description | string | 説明 |
 | coefficients | map | スコア計算用係数 |
@@ -86,6 +86,7 @@ ROOT
 
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
+| (roomId) | string | ドキュメントID |
 | hostId | string | ホストのUID |
 | status | string | `"LOBBY"` / `"VOTING"` / `"RESULT"` / `"FINISHED"` |
 | turn | number | 現在のターン数（1〜10） |
@@ -95,17 +96,18 @@ ROOT
 | isCollapsed | boolean | 街崩壊フラグ |
 | currentPolicyIds | array | 提示中の政策ID（3つ） |
 | deckIds | array | 山札（残りの政策ID） |
-| votes | map | 投票状況 `{ oderId: policyId }` |
+| votes | map | 投票状況 `{ userId: policyId }` |
 | lastResult | map / null | 前回の結果（RESULT時のみ） |
 
 ---
 
 ## 4. players（参加者）- サブコレクション
 
-**パス:** `rooms/{roomId}/players/{oderId}`
+**パス:** `rooms/{roomId}/players/{userId}`
 
 | フィールド | 型 | アクセス | 説明 |
 |-----------|-----|---------|------|
+| (userId) | string | 🌐 公開 | ドキュメントID（Firebase Auth UID） |
 | displayName | string | 🌐 公開 | 表示名 |
 | photoURL | string | 🌐 公開 | アイコンURL |
 | isHost | boolean | 🌐 公開 | ホストか |
@@ -501,9 +503,9 @@ export function useRoom(roomId: string) {
       collection(db, 'rooms', roomId, 'players'),
       (snapshot) => {
         setPlayers(snapshot.docs.map(d => ({
-          oderId: d.id,
+          userId: d.id,
           ...d.data()
-        } as Player)));
+        })));
       }
     );
 
@@ -546,9 +548,9 @@ service cloud.firestore {
 
       // プレイヤー: 認証済みユーザーのみ読み取り可
       // ただし ideology, currentVote は本人のみ
-      match /players/{oderId} {
+      match /players/{userId} {
         allow read: if request.auth != null && (
-          request.auth.uid == oderId ||
+          request.auth.uid == userId ||
           !('ideology' in resource.data) ||
           !('currentVote' in resource.data)
         );
