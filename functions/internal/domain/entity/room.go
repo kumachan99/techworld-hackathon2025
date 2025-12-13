@@ -18,18 +18,19 @@ const (
 // Room はゲームルームを表す
 // パス: rooms/{roomId}
 type Room struct {
-	HostID           string            `json:"hostId" firestore:"hostId"`
-	Status           RoomStatus        `json:"status" firestore:"status"`
-	Turn             int               `json:"turn" firestore:"turn"`
-	MaxTurns         int               `json:"maxTurns" firestore:"maxTurns"`
-	CreatedAt        time.Time         `json:"createdAt" firestore:"createdAt"`
-	CityParams       CityParams        `json:"cityParams" firestore:"cityParams"`
-	IsCollapsed      bool              `json:"isCollapsed" firestore:"isCollapsed"`
-	CurrentPolicyIDs []string          `json:"currentPolicyIds" firestore:"currentPolicyIds"` // IDのみ
-	DeckIDs          []string          `json:"deckIds" firestore:"deckIds"`                   // 山札
-	PassedPolicyIDs  []string          `json:"passedPolicyIds" firestore:"passedPolicyIds"`   // 可決された政策の履歴
-	Votes            map[string]string `json:"votes" firestore:"votes"`                       // { userId: policyId }
-	LastResult       *VoteResult       `json:"lastResult" firestore:"lastResult"`
+	HostID            string                   `json:"hostId" firestore:"hostId"`
+	Status            RoomStatus               `json:"status" firestore:"status"`
+	Turn              int                      `json:"turn" firestore:"turn"`
+	MaxTurns          int                      `json:"maxTurns" firestore:"maxTurns"`
+	CreatedAt         time.Time                `json:"createdAt" firestore:"createdAt"`
+	CityParams        CityParams               `json:"cityParams" firestore:"cityParams"`
+	IsCollapsed       bool                     `json:"isCollapsed" firestore:"isCollapsed"`
+	CurrentPolicyIDs  []string                 `json:"currentPolicyIds" firestore:"currentPolicyIds"` // IDのみ
+	DeckIDs           []string                 `json:"deckIds" firestore:"deckIds"`                   // 山札
+	PassedPolicyIDs   []string                 `json:"passedPolicyIds" firestore:"passedPolicyIds"`   // 可決された政策の履歴
+	Votes             map[string]string        `json:"votes" firestore:"votes"`                       // { userId: policyId }
+	LastResult        *VoteResult              `json:"lastResult" firestore:"lastResult"`
+	GeneratedPolicies map[string]*MasterPolicy `json:"generatedPolicies" firestore:"generatedPolicies"` // AI陳情で生成された政策
 }
 
 // VoteResult は投票結果を表す（RESULT フェーズで使用）
@@ -44,18 +45,19 @@ type VoteResult struct {
 // NewRoom は新しい部屋を作成する
 func NewRoom(hostID string) *Room {
 	return &Room{
-		HostID:           hostID,
-		Status:           RoomStatusLobby,
-		Turn:             0,
-		MaxTurns:         10,
-		CreatedAt:        time.Now(),
-		CityParams:       NewCityParams(),
-		IsCollapsed:      false,
-		CurrentPolicyIDs: make([]string, 0),
-		DeckIDs:          make([]string, 0),
-		PassedPolicyIDs:  make([]string, 0),
-		Votes:            make(map[string]string),
-		LastResult:       nil,
+		HostID:            hostID,
+		Status:            RoomStatusLobby,
+		Turn:              0,
+		MaxTurns:          10,
+		CreatedAt:         time.Now(),
+		CityParams:        NewCityParams(),
+		IsCollapsed:       false,
+		CurrentPolicyIDs:  make([]string, 0),
+		DeckIDs:           make([]string, 0),
+		PassedPolicyIDs:   make([]string, 0),
+		Votes:             make(map[string]string),
+		LastResult:        nil,
+		GeneratedPolicies: make(map[string]*MasterPolicy),
 	}
 }
 
@@ -105,6 +107,36 @@ func (r *Room) AllPlayersVoted(playerCount int) bool {
 		}
 	}
 	return votedCount >= playerCount
+}
+
+// GetGeneratedPolicy はAI生成の政策を取得する
+func (r *Room) GetGeneratedPolicy(policyID string) *MasterPolicy {
+	if r.GeneratedPolicies == nil {
+		return nil
+	}
+	return r.GeneratedPolicies[policyID]
+}
+
+// AddGeneratedPolicy はAI生成の政策を追加する
+func (r *Room) AddGeneratedPolicy(policy *MasterPolicy) string {
+	if r.GeneratedPolicies == nil {
+		r.GeneratedPolicies = make(map[string]*MasterPolicy)
+	}
+	// ユニークなIDを生成（generated_から始まる）
+	policyID := "generated_" + randString(8)
+	policy.PolicyID = policyID
+	r.GeneratedPolicies[policyID] = policy
+	return policyID
+}
+
+// randString はランダムな文字列を生成する
+func randString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 // CountVotes は投票を集計し、最多得票の政策IDを返す

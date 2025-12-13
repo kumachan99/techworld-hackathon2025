@@ -123,7 +123,7 @@ func (uc *VoteUseCase) resolveVote(ctx context.Context, roomID string, room *ent
 	winningPolicyID := room.CountVotes()
 
 	// 可決された政策を取得
-	winningPolicy, err := uc.policyRepo.FindByID(ctx, winningPolicyID)
+	winningPolicy, err := findPolicy(ctx, room, uc.policyRepo, winningPolicyID)
 	if err != nil {
 		return nil, err
 	}

@@ -83,7 +83,7 @@ func (uc *SubmitPetitionUseCase) Execute(ctx context.Context, input SubmitPetiti
 	// 過去に採用された政策を取得
 	var passedPolicies []*entity.MasterPolicy
 	for _, policyID := range room.PassedPolicyIDs {
-		policy, err := uc.policyRepo.FindByID(ctx, policyID)
+		policy, err := findPolicy(ctx, room, uc.policyRepo, policyID)
 		if err != nil {
 			// エラーは無視して続行（削除された政策など）
 			continue
@@ -111,11 +111,8 @@ func (uc *SubmitPetitionUseCase) Execute(ctx context.Context, input SubmitPetiti
 		}, nil
 	}
 
-	// 承認された場合、政策を保存
-	policyID, err := uc.policyRepo.Create(ctx, result.Policy)
-	if err != nil {
-		return nil, err
-	}
+	// 承認された場合、政策をRoomに保存
+	policyID := room.AddGeneratedPolicy(result.Policy)
 
 	// deckIds に追加
 	room.DeckIDs = append(room.DeckIDs, policyID)
