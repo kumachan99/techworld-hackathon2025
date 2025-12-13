@@ -87,7 +87,6 @@ curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)
   -d '{
     "fields": {
       "id": {"stringValue": "policy_001"},
-      "category": {"stringValue": "Economy"},
       "title": {"stringValue": "経済政策1"},
       "description": {"stringValue": "テスト政策の説明"},
       "newsFlash": {"stringValue": "【速報】政策が可決されました！"},
@@ -156,7 +155,6 @@ curl -X POST "http://127.0.0.1:8080/v1/projects/demo-project/databases/(default)
       "displayName": {"stringValue": "ホスト太郎"},
       "isHost": {"booleanValue": true},
       "isReady": {"booleanValue": true},
-      "hasVoted": {"booleanValue": false},
       "isPetitionUsed": {"booleanValue": false},
       "currentVote": {"stringValue": ""}
     }

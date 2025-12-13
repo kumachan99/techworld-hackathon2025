@@ -43,11 +43,10 @@ ROOT
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
 | id | string | 政策ID |
-| category | string | `"Economy"` / `"Welfare"` / `"Education"` / `"Environment"` / `"Security"` / `"HumanRights"` |
 | title | string | タイトル |
 | description | string | 説明文 |
 | newsFlash | string | 結果発表時のニュース |
-| effects | map | 効果値 ⚠️**結果発表まで非公開** |
+| effects | map | 効果値（6パラメータ全てに影響）⚠️**結果発表まで非公開** |
 
 ---
 
@@ -94,10 +93,11 @@ ROOT
 | photoURL | string | 🌐 公開 | アイコンURL |
 | isHost | boolean | 🌐 公開 | ホストか |
 | isReady | boolean | 🌐 公開 | 準備完了か |
-| hasVoted | boolean | 🌐 公開 | 投票済みか |
 | isPetitionUsed | boolean | 🌐 公開 | 陳情権使用済みか |
 | ideology | map | 🔒 本人のみ | 割り振られた思想 |
 | currentVote | string | 🔒 本人のみ | 投票先の政策ID |
+
+> **Note:** 投票済みかどうかは `Room.votes` の keys を監視することで判断できます。
 
 ---
 
@@ -152,7 +152,6 @@ await setDoc(doc(db, 'rooms', roomId, 'players', oderId), {
   photoURL: '',
   isHost: false,
   isReady: false,
-  hasVoted: false,
   isPetitionUsed: false,
   ideology: ideology,      // 🔒 本人のみ
   currentVote: '',         // 🔒 本人のみ
@@ -173,13 +172,14 @@ await updateDoc(doc(db, 'rooms', roomId, 'players', oderId), {
 // ========================================
 // 投票
 // ========================================
+// Room.votes を更新することで投票状態も同時に管理
 await updateDoc(doc(db, 'rooms', roomId, 'players', oderId), {
   currentVote: policyId,
-  hasVoted: true
 });
 await updateDoc(doc(db, 'rooms', roomId), {
   [`votes.${oderId}`]: policyId
 });
+// 投票済みかは Room.votes の keys で判断可能
 
 // ========================================
 // 次ターンへ（ホストのみ、RESULTフェーズで）
@@ -187,7 +187,7 @@ await updateDoc(doc(db, 'rooms', roomId), {
 await updateDoc(doc(db, 'rooms', roomId), {
   status: 'VOTING',
   turn: increment(1),  // ターン数をインクリメント
-  // currentPolicyIds, votes, hasVoted は /resolve API で既に設定済み
+  // currentPolicyIds, votes は /resolve API で既に設定済み
 });
 
 // ========================================
@@ -220,7 +220,6 @@ onSnapshot(collection(db, 'rooms', roomId, 'players'), (snapshot) => {
 3. `deckIds` から3枚を削除
 4. `votes` を初期化（全プレイヤーID → `null`）
 5. `status` を `VOTING` に、`turn` を `1` に
-6. 全プレイヤーの `hasVoted` を `false` に
 
 ---
 
@@ -239,7 +238,7 @@ onSnapshot(collection(db, 'rooms', roomId, 'players'), (snapshot) => {
 6. **次のターンの準備:**
    - `deckIds` から3枚を `currentPolicyIds` に移動
    - `votes` をリセット（全プレイヤーID → `""`）
-   - 全プレイヤーの `hasVoted` を `false` に、`currentVote` を `""` に
+   - 全プレイヤーの `currentVote` を `""` に
 7. `status` を `RESULT` に
 8. ゲーム終了判定:
    - `turn >= maxTurns` または `isCollapsed == true` → `status` を `FINISHED` に

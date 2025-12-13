@@ -50,9 +50,8 @@ func NewResolveVoteUseCase(
 // 6. 次のターンの準備:
 //   - deckIds から3枚を currentPolicyIds に移動
 //   - votes をリセット
-//   - 全プレイヤーの hasVoted, currentVote をリセット
+//   - 全プレイヤーの currentVote をリセット
 //
-// 7. status を RESUL
 // 7. status を RESULT に
 // 8. ゲーム終了判定: turn >= maxTurns or isCollapsed → FINISHED
 func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInput) (*ResolveVoteOutput, error) {

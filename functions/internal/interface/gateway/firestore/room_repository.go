@@ -117,7 +117,6 @@ func (r *PlayerRepository) ClearAllVotes(ctx context.Context, roomID string) err
 	batch := r.client.Batch()
 	for _, doc := range docs {
 		batch.Update(doc.Ref, []firestore.Update{
-			{Path: "hasVoted", Value: false},
 			{Path: "currentVote", Value: ""},
 		})
 	}

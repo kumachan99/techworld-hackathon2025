@@ -55,7 +55,6 @@ func (c *OpenAIClient) ReviewPetition(ctx context.Context, petitionText string) 
 承認する場合は以下のJSON形式で回答してください：
 {
   "approved": true,
-  "category": "カテゴリ（Economy/Welfare/Education/Environment/Security/HumanRights）",
   "title": "政策のタイトル（20文字以内）",
   "description": "政策の説明文（効果は伏せて、どんな政策かだけ説明）",
   "newsFlash": "この政策が可決されたときのニュース速報風の文章（50文字程度）",
@@ -100,13 +99,12 @@ func (c *OpenAIClient) ReviewPetition(ctx context.Context, petitionText string) 
 
 	// JSONをパース
 	var result struct {
-		Approved    bool                  `json:"approved"`
-		Category    entity.PolicyCategory `json:"category"`
-		Title       string                `json:"title"`
-		Description string                `json:"description"`
-		NewsFlash   string                `json:"newsFlash"`
-		Effects     map[string]int        `json:"effects"`
-		Reason      string                `json:"reason"`
+		Approved    bool           `json:"approved"`
+		Title       string         `json:"title"`
+		Description string         `json:"description"`
+		NewsFlash   string         `json:"newsFlash"`
+		Effects     map[string]int `json:"effects"`
+		Reason      string         `json:"reason"`
 	}
 
 	if err := json.Unmarshal([]byte(content), &result); err != nil {
@@ -123,7 +121,6 @@ func (c *OpenAIClient) ReviewPetition(ctx context.Context, petitionText string) 
 	return &PetitionResult{
 		Approved: true,
 		Policy: &entity.MasterPolicy{
-			Category:    result.Category,
 			Title:       result.Title,
 			Description: result.Description,
 			NewsFlash:   result.NewsFlash,

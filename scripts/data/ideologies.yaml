@@ -1,0 +1,71 @@
+# 思想マスターデータ
+# coefficients はスコア計算時の重み（-3 ~ +3）
+# 正の値: その項目が高いとスコアアップ
+# 負の値: その項目が高いとスコアダウン
+
+ideologies:
+  - id: ideology_capitalist
+    name: 新自由主義者
+    description: 経済成長こそが市民の幸福につながると信じる。規制緩和と市場原理を重視。
+    coefficients:
+      economy: 3
+      welfare: 0
+      education: 1
+      environment: -1
+      security: 1
+      humanRights: 0
+
+  - id: ideology_socialist
+    name: 社会民主主義者
+    description: 全ての市民に平等な福祉を提供することが最優先。格差是正を目指す。
+    coefficients:
+      economy: -1
+      welfare: 3
+      education: 2
+      environment: 0
+      security: 0
+      humanRights: 1
+
+  - id: ideology_environmentalist
+    name: 環境保護主義者
+    description: 持続可能な環境なくして未来はない。自然との共生を最重視。
+    coefficients:
+      economy: -2
+      welfare: 0
+      education: 1
+      environment: 3
+      security: 0
+      humanRights: 1
+
+  - id: ideology_authoritarian
+    name: 秩序重視派
+    description: 安全な街こそが全ての基盤。強い統治による社会の安定を求める。
+    coefficients:
+      economy: 0
+      welfare: -1
+      education: 0
+      environment: 0
+      security: 3
+      humanRights: -1
+
+  - id: ideology_libertarian
+    name: 自由至上主義者
+    description: 個人の自由と権利を何よりも尊重。政府の介入を最小限に。
+    coefficients:
+      economy: 1
+      welfare: -1
+      education: 0
+      environment: 0
+      security: -1
+      humanRights: 3
+
+  - id: ideology_technocrat
+    name: テクノクラート
+    description: 教育と科学技術の発展が社会を前進させる。知識こそ力。
+    coefficients:
+      economy: 1
+      welfare: 0
+      education: 3
+      environment: 1
+      security: 0
+      humanRights: 0

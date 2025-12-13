@@ -31,22 +31,14 @@ export type IdeologyCoefficients = CityParams;
 // master_policies コレクション
 // =============================================================================
 
-/** 政策カテゴリ */
-export type PolicyCategory =
-  | 'Economy'
-  | 'Welfare'
-  | 'Education'
-  | 'Environment'
-  | 'Security'
-  | 'HumanRights';
-
 /**
  * 政策カードマスター
  * パス: master_policies/{policyId}
+ *
+ * 各政策は effects で6パラメータ全てに影響を与えます。
  */
 export interface MasterPolicy {
   id: string;
-  category: PolicyCategory;
   title: string;
   description: string;
   newsFlash: string;
@@ -111,6 +103,7 @@ export interface VoteResult {
  * パス: rooms/{roomId}/players/{oderId}
  *
  * ⚠️ ideology, currentVote は Security Rules で本人以外読み取り禁止
+ * 投票済みかは Room.votes の keys を監視して判断
  */
 export interface Player {
   // 🌐 公開情報
@@ -118,7 +111,6 @@ export interface Player {
   photoURL: string;
   isHost: boolean;
   isReady: boolean;
-  hasVoted: boolean;
   isPetitionUsed: boolean;
 
   // 🔒 秘匿情報（本人のみ読み取り可）
@@ -132,7 +124,6 @@ export interface PlayerPublic {
   photoURL: string;
   isHost: boolean;
   isReady: boolean;
-  hasVoted: boolean;
   isPetitionUsed: boolean;
 }
 
@@ -204,7 +195,6 @@ export interface CreatePlayerData {
   photoURL: string;
   isHost: boolean;
   isReady: false;
-  hasVoted: false;
   isPetitionUsed: false;
   ideology: MasterIdeology;
   currentVote: '';

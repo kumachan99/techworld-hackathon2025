@@ -4,13 +4,13 @@ package entity
 // パス: rooms/{roomId}/players/{userId}
 //
 // ⚠️ ideology, currentVote は Security Rules で本人以外読み取り禁止
+// 投票状態は Room.Votes の keys で判断可能
 type Player struct {
 	// 🌐 公開情報
 	DisplayName    string `json:"displayName" firestore:"displayName"`
 	PhotoURL       string `json:"photoURL" firestore:"photoURL"`
 	IsHost         bool   `json:"isHost" firestore:"isHost"`
 	IsReady        bool   `json:"isReady" firestore:"isReady"`
-	HasVoted       bool   `json:"hasVoted" firestore:"hasVoted"`
 	IsPetitionUsed bool   `json:"isPetitionUsed" firestore:"isPetitionUsed"`
 
 	// 🔒 秘匿情報（本人のみ読み取り可）
@@ -25,7 +25,6 @@ func NewPlayer(displayName string, isHost bool, ideology *MasterIdeology) *Playe
 		PhotoURL:       "",
 		IsHost:         isHost,
 		IsReady:        false,
-		HasVoted:       false,
 		IsPetitionUsed: false,
 		Ideology:       ideology,
 		CurrentVote:    "",
@@ -35,13 +34,11 @@ func NewPlayer(displayName string, isHost bool, ideology *MasterIdeology) *Playe
 // Vote は投票を行う
 func (p *Player) Vote(policyID string) {
 	p.CurrentVote = policyID
-	p.HasVoted = true
 }
 
 // ClearVote は投票をクリアする（次のターン用）
 func (p *Player) ClearVote() {
 	p.CurrentVote = ""
-	p.HasVoted = false
 }
 
 // CalculateScore はスコアを計算する
