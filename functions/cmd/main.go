@@ -12,6 +12,7 @@ import (
 
 	"github.com/techworld-hackathon/functions/internal/interface/gateway/ai"
 	firestoreGateway "github.com/techworld-hackathon/functions/internal/interface/gateway/firestore"
+	imageGateway "github.com/techworld-hackathon/functions/internal/interface/gateway/image"
 	"github.com/techworld-hackathon/functions/internal/interface/handler"
 	"github.com/techworld-hackathon/functions/internal/usecase"
 )
@@ -85,14 +86,17 @@ func initializeHandler(firestoreClient *firestore.Client) *handler.Handler {
 	// AI Client
 	aiClient := ai.NewSakuraAIClient()
 
+	// Image Generator
+	imageGenerator := imageGateway.NewFluxClient()
+
 	// UseCase
 	createRoomUC := usecase.NewCreateRoomUseCase(roomRepo, playerRepo, ideologyRepo)
 	joinRoomUC := usecase.NewJoinRoomUseCase(roomRepo, playerRepo, ideologyRepo)
 	leaveRoomUC := usecase.NewLeaveRoomUseCase(roomRepo, playerRepo)
 	toggleReadyUC := usecase.NewToggleReadyUseCase(roomRepo, playerRepo)
 	startGameUC := usecase.NewStartGameUseCase(roomRepo, playerRepo, policyRepo)
-	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo, policyRepo)
-	resolveVoteUC := usecase.NewResolveVoteUseCase(roomRepo, playerRepo, policyRepo)
+	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo, policyRepo, imageGenerator)
+	resolveVoteUC := usecase.NewResolveVoteUseCase(roomRepo, playerRepo, policyRepo, imageGenerator)
 	nextTurnUC := usecase.NewNextTurnUseCase(roomRepo, playerRepo)
 	submitPetitionUC := usecase.NewSubmitPetitionUseCase(roomRepo, playerRepo, policyRepo, aiClient)
 

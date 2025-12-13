@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
 	"github.com/techworld-hackathon/functions/internal/domain/repository"
+	"github.com/techworld-hackathon/functions/internal/domain/service"
 )
 
 // ResolveVoteInput は投票集計の入力
@@ -21,9 +23,10 @@ type ResolveVoteOutput struct {
 // ResolveVoteUseCase は投票集計のユースケース
 // POST /api/rooms/{roomId}/resolve
 type ResolveVoteUseCase struct {
-	roomRepo   repository.RoomRepository
-	playerRepo repository.PlayerRepository
-	policyRepo repository.PolicyRepository
+	roomRepo       repository.RoomRepository
+	playerRepo     repository.PlayerRepository
+	policyRepo     repository.PolicyRepository
+	imageGenerator service.ImageGenerator
 }
 
 // NewResolveVoteUseCase は ResolveVoteUseCase を作成する
@@ -31,11 +34,13 @@ func NewResolveVoteUseCase(
 	roomRepo repository.RoomRepository,
 	playerRepo repository.PlayerRepository,
 	policyRepo repository.PolicyRepository,
+	imageGenerator service.ImageGenerator,
 ) *ResolveVoteUseCase {
 	return &ResolveVoteUseCase{
-		roomRepo:   roomRepo,
-		playerRepo: playerRepo,
-		policyRepo: policyRepo,
+		roomRepo:       roomRepo,
+		playerRepo:     playerRepo,
+		policyRepo:     policyRepo,
+		imageGenerator: imageGenerator,
 	}
 }
 
@@ -89,6 +94,9 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 	// 政策の効果を街に適用
 	room.ApplyPolicyEffects(winningPolicy.Effects)
 
+	// 可決された政策を履歴に追加
+	room.PassedPolicyIDs = append(room.PassedPolicyIDs, winningPolicy.PolicyID)
+
 	// 投票結果を設定
 	room.LastResult = &entity.VoteResult{
 		PassedPolicyID:    winningPolicy.PolicyID,
@@ -98,8 +106,20 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 		VoteDetails:       room.Votes,
 	}
 
-	// 可決された政策を履歴に追加
-	room.PassedPolicyIDs = append(room.PassedPolicyIDs, winningPolicy.PolicyID)
+	// 街の画像を生成
+	if uc.imageGenerator != nil {
+		passedPolicies, err := uc.getPassedPolicies(ctx, room)
+		if err != nil {
+			slog.Warn("failed to get passed policies for image generation", slog.Any("error", err))
+		} else {
+			imageResult, err := uc.imageGenerator.GenerateCityImage(ctx, &room.CityParams, passedPolicies)
+			if err != nil {
+				slog.Warn("failed to generate city image", slog.Any("error", err))
+			} else {
+				room.LastResult.CityImage = imageResult.Image
+			}
+		}
+	}
 
 	// 結果発表フェーズに移行
 	room.Status = entity.RoomStatusResult
@@ -119,4 +139,19 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 		Room:       room,
 		IsGameOver: isGameOver,
 	}, nil
+}
+
+// getPassedPolicies は可決された政策のリストを取得する
+func (uc *ResolveVoteUseCase) getPassedPolicies(ctx context.Context, room *entity.Room) ([]*entity.MasterPolicy, error) {
+	policies := make([]*entity.MasterPolicy, 0, len(room.PassedPolicyIDs))
+	for _, policyID := range room.PassedPolicyIDs {
+		policy, err := findPolicy(ctx, room, uc.policyRepo, policyID)
+		if err != nil {
+			return nil, err
+		}
+		if policy != nil {
+			policies = append(policies, policy)
+		}
+	}
+	return policies, nil
 }

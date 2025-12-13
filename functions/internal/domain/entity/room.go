@@ -40,6 +40,7 @@ type VoteResult struct {
 	ActualEffects     map[string]int    `json:"actualEffects" firestore:"actualEffects"`
 	NewsFlash         string            `json:"newsFlash" firestore:"newsFlash"`
 	VoteDetails       map[string]string `json:"voteDetails" firestore:"voteDetails"`
+	CityImage         string            `json:"cityImage,omitempty" firestore:"cityImage,omitempty"` // Base64エンコードされた街の画像
 }
 
 // NewRoom は新しい部屋を作成する
