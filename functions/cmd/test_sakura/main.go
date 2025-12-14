@@ -17,7 +17,7 @@ func main() {
 	if token == "" {
 		log.Fatal("SAKURA_AI_TOKEN environment variable is not set")
 	}
-	fmt.Println("✓ SAKURA_AI_TOKEN is set")
+	fmt.Printf("SAKURA_AI_TOKEN is set: %s\n", token)
 
 	// クライアント作成
 	client := ai.NewSakuraAIClient()

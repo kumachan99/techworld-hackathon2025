@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/base64"
 	"log/slog"
 
 	"github.com/techworld-hackathon/functions/internal/domain/entity"
@@ -27,6 +28,7 @@ type ResolveVoteUseCase struct {
 	playerRepo     repository.PlayerRepository
 	policyRepo     repository.PolicyRepository
 	imageGenerator service.ImageGenerator
+	imageStorage   service.ImageStorage
 }
 
 // NewResolveVoteUseCase は ResolveVoteUseCase を作成する
@@ -35,12 +37,14 @@ func NewResolveVoteUseCase(
 	playerRepo repository.PlayerRepository,
 	policyRepo repository.PolicyRepository,
 	imageGenerator service.ImageGenerator,
+	imageStorage service.ImageStorage,
 ) *ResolveVoteUseCase {
 	return &ResolveVoteUseCase{
 		roomRepo:       roomRepo,
 		playerRepo:     playerRepo,
 		policyRepo:     policyRepo,
 		imageGenerator: imageGenerator,
+		imageStorage:   imageStorage,
 	}
 }
 
@@ -117,6 +121,22 @@ func (uc *ResolveVoteUseCase) Execute(ctx context.Context, input ResolveVoteInpu
 				slog.Warn("failed to generate city image", slog.Any("error", err))
 			} else {
 				room.LastResult.CityImage = imageResult.Image
+
+				// GCSにアップロードしてsigned URLを取得
+				if uc.imageStorage != nil {
+					imageData, err := base64.StdEncoding.DecodeString(imageResult.Image)
+					if err != nil {
+						slog.Warn("failed to decode base64 image", slog.Any("error", err))
+					} else {
+						signedURL, err := uc.imageStorage.UploadCityImage(ctx, input.RoomID, room.Turn, imageData)
+						if err != nil {
+							slog.Warn("failed to upload city image to GCS", slog.Any("error", err))
+						} else {
+							room.LastResult.CityImageURL = signedURL
+							slog.Info("city image uploaded to GCS", slog.String("url", signedURL))
+						}
+					}
+				}
 			}
 		}
 	}

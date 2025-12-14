@@ -76,7 +76,7 @@ func (uc *NextTurnUseCase) Execute(ctx context.Context, input NextTurnInput) (*N
 
 	// statusをVOTINGに
 	room.Status = entity.RoomStatusVoting
-	room.LastResult = nil
+	// LastResult は次の投票結果が出るまで保持する
 
 	// 部屋を更新
 	if err := uc.roomRepo.Update(ctx, input.RoomID, room); err != nil {

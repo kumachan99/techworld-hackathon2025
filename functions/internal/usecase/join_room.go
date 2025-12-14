@@ -77,6 +77,12 @@ func (uc *JoinRoomUseCase) Execute(ctx context.Context, input JoinRoomInput) (*J
 		return nil, err
 	}
 
+	// プレイヤー上限チェック（最大4人）
+	const maxPlayers = 4
+	if len(players) >= maxPlayers {
+		return nil, entity.ErrRoomFull
+	}
+
 	// 全思想を取得
 	allIdeologies, err := uc.ideologyRepo.GetAll(ctx)
 	if err != nil {
@@ -99,7 +105,7 @@ func (uc *JoinRoomUseCase) Execute(ctx context.Context, input JoinRoomInput) (*J
 		}
 	}
 
-	// 思想が足りない（最大6人）
+	// 思想が足りない
 	if len(availableIdeologies) == 0 {
 		return nil, entity.ErrRoomFull
 	}

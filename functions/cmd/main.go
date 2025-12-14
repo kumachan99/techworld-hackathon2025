@@ -10,9 +10,11 @@ import (
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
 
+	"github.com/techworld-hackathon/functions/internal/domain/service"
 	"github.com/techworld-hackathon/functions/internal/interface/gateway/ai"
 	firestoreGateway "github.com/techworld-hackathon/functions/internal/interface/gateway/firestore"
 	imageGateway "github.com/techworld-hackathon/functions/internal/interface/gateway/image"
+	storageGateway "github.com/techworld-hackathon/functions/internal/interface/gateway/storage"
 	"github.com/techworld-hackathon/functions/internal/interface/handler"
 	"github.com/techworld-hackathon/functions/internal/usecase"
 )
@@ -56,7 +58,7 @@ func main() {
 	defer firestoreClient.Close()
 
 	// 依存性の注入
-	h := initializeHandler(firestoreClient)
+	h := initializeHandler(ctx, firestoreClient)
 
 	// ルーティング設定
 	mux := http.NewServeMux()
@@ -76,7 +78,7 @@ func main() {
 }
 
 // initializeHandler は依存性を注入してハンドラーを初期化する
-func initializeHandler(firestoreClient *firestore.Client) *handler.Handler {
+func initializeHandler(ctx context.Context, firestoreClient *firestore.Client) *handler.Handler {
 	// Repository
 	roomRepo := firestoreGateway.NewRoomRepository(firestoreClient)
 	playerRepo := firestoreGateway.NewPlayerRepository(firestoreClient)
@@ -89,14 +91,28 @@ func initializeHandler(firestoreClient *firestore.Client) *handler.Handler {
 	// Image Generator
 	imageGenerator := imageGateway.NewFluxClient()
 
+	// Image Storage (GCS)
+	var imageStorage service.ImageStorage
+	if os.Getenv("GCS_BUCKET_NAME") != "" {
+		gcsClient, err := storageGateway.NewGCSClientFromEnv(ctx)
+		if err != nil {
+			slog.Warn("failed to initialize GCS client, image storage disabled", slog.Any("error", err))
+		} else {
+			imageStorage = gcsClient
+			slog.Info("GCS client initialized", slog.String("bucket", os.Getenv("GCS_BUCKET_NAME")))
+		}
+	} else {
+		slog.Info("GCS_BUCKET_NAME not set, image storage disabled")
+	}
+
 	// UseCase
 	createRoomUC := usecase.NewCreateRoomUseCase(roomRepo, playerRepo, ideologyRepo)
 	joinRoomUC := usecase.NewJoinRoomUseCase(roomRepo, playerRepo, ideologyRepo)
 	leaveRoomUC := usecase.NewLeaveRoomUseCase(roomRepo, playerRepo)
 	toggleReadyUC := usecase.NewToggleReadyUseCase(roomRepo, playerRepo)
 	startGameUC := usecase.NewStartGameUseCase(roomRepo, playerRepo, policyRepo)
-	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo, policyRepo, imageGenerator)
-	resolveVoteUC := usecase.NewResolveVoteUseCase(roomRepo, playerRepo, policyRepo, imageGenerator)
+	voteUC := usecase.NewVoteUseCase(roomRepo, playerRepo, policyRepo, imageGenerator, imageStorage)
+	resolveVoteUC := usecase.NewResolveVoteUseCase(roomRepo, playerRepo, policyRepo, imageGenerator, imageStorage)
 	nextTurnUC := usecase.NewNextTurnUseCase(roomRepo, playerRepo)
 	submitPetitionUC := usecase.NewSubmitPetitionUseCase(roomRepo, playerRepo, policyRepo, aiClient)
 

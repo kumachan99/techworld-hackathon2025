@@ -107,8 +107,8 @@ func (c *FluxClient) GenerateCityImage(ctx context.Context, cityParams *entity.C
 func buildCityPrompt(cityParams *entity.CityParams, passedPolicies []*entity.MasterPolicy) string {
 	var elements []string
 
-	// ベースプロンプト（フォトリアルスタイル）
-	baseStyle := "Photorealistic aerial view of a modern city, professional photography, golden hour lighting, ultra detailed, 8k resolution"
+	// ベースプロンプト（遠景・航空視点のフォトリアルスタイル）
+	baseStyle := "Photorealistic aerial view of a city, professional photography, golden hour lighting, ultra detailed, 8k resolution"
 
 	// 経済に基づく要素
 	elements = append(elements, describeEconomy(cityParams.Economy))
@@ -144,90 +144,90 @@ func buildCityPrompt(cityParams *entity.CityParams, passedPolicies []*entity.Mas
 func describeEconomy(value int) string {
 	switch {
 	case value >= 80:
-		return "towering glass skyscrapers, luxury shopping districts, high-end cars on streets, prosperous business centers, construction cranes everywhere"
+		return "luxury brand stores with elegant window displays, Tesla and BMW cars parked on street, business people in suits, gleaming glass storefronts, upscale cafes with outdoor seating"
 	case value >= 60:
-		return "modern office buildings, busy commercial areas, well-maintained infrastructure, thriving downtown"
+		return "busy shopping street with well-dressed pedestrians, modern retail stores, clean sidewalks, food delivery bikes, mix of local and chain stores"
 	case value >= 40:
-		return "mixed urban landscape, some commercial activity, moderate development"
+		return "ordinary shops and convenience stores, some vacant storefronts, mix of old and new buildings, average cars parked along street"
 	case value >= 20:
-		return "older buildings with some disrepair, vacant storefronts, reduced commercial activity"
+		return "many closed shops with shutters down, for rent signs in windows, older worn buildings, few pedestrians, discount stores"
 	default:
-		return "abandoned factories, boarded-up shops, crumbling infrastructure, economic depression visible"
+		return "boarded up storefronts with graffiti, broken windows, abandoned buildings, homeless people visible, trash on streets, very few cars"
 	}
 }
 
 func describeEnvironment(value int) string {
 	switch {
 	case value >= 80:
-		return "lush green parks everywhere, rooftop gardens, solar panels on buildings, crystal clear blue sky, clean rivers, abundant trees lining streets"
+		return "lush green street trees with full canopy, flower planters on sidewalks, solar panels visible on rooftops, crystal clear blue sky, bicycle lanes, electric vehicle charging stations"
 	case value >= 60:
-		return "well-maintained parks, some green spaces, relatively clean air, visible environmental efforts"
+		return "healthy street trees, some planters with flowers, clean streets, recycling bins visible, partly cloudy sky"
 	case value >= 40:
-		return "limited green spaces, some urban vegetation, average air quality"
+		return "sparse street trees, some litter on sidewalks, gray sky, mix of electric and gas cars"
 	case value >= 20:
-		return "few parks, smoggy atmosphere, industrial pollution visible, brown haze in sky"
+		return "bare or dying trees, visible smog in air, overflowing garbage bins, hazy brownish sky, no green spaces"
 	default:
-		return "heavy smog obscuring buildings, polluted waterways, dead trees, industrial smokestacks belching smoke, environmental disaster"
+		return "dead trees with bare branches, thick smog obscuring buildings, garbage piled on corners, brown polluted sky, people wearing masks"
 	}
 }
 
 func describeWelfare(value int) string {
 	switch {
 	case value >= 80:
-		return "modern hospitals visible, community centers, accessible public facilities, well-dressed diverse citizens, clean public spaces"
+		return "families with strollers on clean sidewalks, elderly people on benches smiling, children playing safely, accessible ramps and crosswalks, well-maintained public toilets"
 	case value >= 60:
-		return "adequate public facilities, functional healthcare buildings, organized public areas"
+		return "mix of ages walking comfortably, bus stops with shelters, public benches in good condition, people waiting at crosswalks"
 	case value >= 40:
-		return "basic public services visible, some public facilities"
+		return "ordinary pedestrians of various ages, basic street furniture, some worn public facilities"
 	case value >= 20:
-		return "overcrowded public facilities, visible poverty, worn public infrastructure"
+		return "elderly struggling with bags, worn out bus stops, people sleeping on benches, visibly poor people"
 	default:
-		return "homeless encampments, dilapidated public buildings, visible suffering, stark inequality"
+		return "homeless people with cardboard shelters, beggars on corners, people in ragged clothes, abandoned shopping carts, tent encampments"
 	}
 }
 
 func describeSecurity(value int) string {
 	switch {
 	case value >= 80:
-		return "clean well-lit streets, orderly traffic, peaceful atmosphere, safe-looking neighborhoods"
+		return "bright street lights, clean crosswalks, women walking alone safely, children on bicycles, no graffiti, security cameras discretely placed"
 	case value >= 60:
-		return "generally safe streets, security presence, maintained public order"
+		return "well-lit streets, police officer visible in distance, orderly parking, functioning traffic lights"
 	case value >= 40:
-		return "normal urban environment, standard security measures"
+		return "average street lighting, some graffiti on walls, normal pedestrian activity"
 	case value >= 20:
-		return "graffiti on walls, some areas looking neglected, security barriers visible"
+		return "graffiti covering walls, broken street lights, bars on shop windows, people looking over shoulders"
 	default:
-		return "barred windows, security checkpoints, damaged buildings, tense atmosphere, visible decay"
+		return "heavy graffiti everywhere, smashed windows, barbed wire on fences, people hurrying nervously, security shutters down, dark shadowy corners"
 	}
 }
 
 func describeEducation(value int) string {
 	switch {
 	case value >= 80:
-		return "prestigious university campuses visible, modern school buildings, libraries, research facilities"
+		return "bookstore with crowded display window, students with tablets and laptops at cafe, modern library building visible, tutoring center signs, cultural posters on walls"
 	case value >= 60:
-		return "well-maintained schools, educational institutions present"
+		return "bookshop visible, students with backpacks walking, public library sign, educational advertisement boards"
 	case value >= 40:
-		return "standard educational buildings, average school facilities"
+		return "few students visible, basic convenience store, ordinary commercial signage"
 	case value >= 20:
-		return "older school buildings, limited educational infrastructure"
+		return "no bookstores visible, mostly entertainment shops, pachinko parlor signs, few young people"
 	default:
-		return "neglected school buildings, closed libraries, lack of educational facilities"
+		return "gambling parlors and adult entertainment signs, no educational facilities visible, loitering youth, vandalized public signs"
 	}
 }
 
 func describeHumanRights(value int) string {
 	switch {
 	case value >= 80:
-		return "diverse crowds of people, street art and cultural expression, open public gatherings, vibrant street life"
+		return "diverse crowd with different ethnicities and styles, rainbow flags visible, street musicians performing, political posters on walls, open air market with various vendors"
 	case value >= 60:
-		return "mixed population visible, cultural venues, public expression"
+		return "mix of people from different backgrounds, some street art, community bulletin board, outdoor cafe conversations"
 	case value >= 40:
-		return "typical urban population, some cultural elements"
+		return "mostly homogeneous crowd, standard urban population, neutral expressions"
 	case value >= 20:
-		return "uniform appearance, surveillance cameras visible, controlled public spaces"
+		return "surveillance cameras prominently placed, uniformly dressed people, no street art, controlled atmosphere"
 	default:
-		return "heavy surveillance infrastructure, restricted areas, conformist atmosphere, oppressive feeling"
+		return "heavy CCTV cameras everywhere, propaganda posters, people avoiding eye contact, uniformed officials visible, no personal expression, oppressive atmosphere"
 	}
 }
 
@@ -252,33 +252,33 @@ func describePolicies(policies []*entity.MasterPolicy) string {
 }
 
 func extractPolicyKeywords(title string) string {
-	// 政策タイトルからビジュアル要素を抽出
+	// 政策タイトルからビジュアル要素を抽出（街中視点）
 	keywordMap := map[string]string{
 		// 既存の政策マスター
-		"消費税":       "bustling shopping areas with many shoppers",
-		"再生可能":      "wind turbines and solar panels on rooftops",
-		"防犯カメラ":     "security cameras on poles and buildings",
-		"ベーシックインカム": "content citizens relaxing in public spaces",
-		"教育無償化":     "crowded school buildings with happy students",
-		"ショッピングモール": "large shopping mall complexes",
-		"公園":        "beautifully landscaped public parks",
-		"緑地":        "abundant green spaces and trees",
-		"警察":        "police officers patrolling streets",
-		"IT企業":      "modern tech company headquarters",
-		"高齢者":       "elderly people enjoying public amenities",
-		"自然保護":      "protected natural areas and wildlife",
-		"夜間外出規制":    "quiet empty streets at night with street lights",
-		"起業":        "startup offices and co-working spaces",
-		"市民農園":      "urban community gardens and farms",
-		"情報公開":      "transparent government buildings with open design",
+		"消費税":       "sale signs in shop windows, shoppers with many bags",
+		"再生可能":      "solar panels on nearby rooftops, electric car charging station visible",
+		"防犯カメラ":     "security cameras mounted on poles and building corners",
+		"ベーシックインカム": "relaxed people at outdoor cafes, leisurely pedestrians",
+		"教育無償化":     "students in uniforms walking happily, tutoring school signs",
+		"ショッピングモール": "large shopping center entrance visible, escalators through glass",
+		"公園":        "green park visible at intersection, children on playground",
+		"緑地":        "flower beds along sidewalk, small garden plots visible",
+		"警察":        "police officers walking beat, police box visible",
+		"IT企業":      "tech company logos on buildings, people with laptops at cafe",
+		"高齢者":       "elderly couples walking arm in arm, accessible benches",
+		"自然保護":      "bird feeders on trees, wildlife crossing signs",
+		"夜間外出規制":    "curfew notice boards, empty streets with patrol car",
+		"起業":        "co-working space sign, startup logos in windows",
+		"市民農園":      "community garden plots visible, people tending vegetables",
+		"情報公開":      "public information boards, transparent glass government office",
 		// 追加キーワード
-		"AI":   "futuristic tech buildings with digital displays",
-		"軍事":   "military vehicles and personnel visible",
-		"移民":   "culturally diverse population on streets",
-		"原発":   "power plant cooling towers in distance",
-		"医療":   "modern hospital complex with ambulances",
-		"年金":   "elderly people peacefully in parks",
-		"規制緩和": "construction cranes and development activity",
+		"AI":   "digital displays showing AI services, robot delivery on sidewalk",
+		"軍事":   "military recruitment poster, uniformed personnel visible",
+		"移民":   "diverse ethnic restaurants, multilingual signs",
+		"原発":   "power line infrastructure prominent, energy company ads",
+		"医療":   "pharmacy with green cross sign, ambulance passing",
+		"年金":   "senior citizens center sign, elderly at cafe tables",
+		"規制緩和": "construction scaffolding, new building going up",
 	}
 
 	for keyword, visual := range keywordMap {
@@ -296,14 +296,14 @@ func describeOverallAtmosphere(cityParams *entity.CityParams) string {
 
 	switch {
 	case avg >= 70:
-		return "utopian prosperous city, hopeful atmosphere, bright future feeling"
+		return "warm golden sunlight, people smiling and chatting, vibrant energetic mood, sense of prosperity and hope"
 	case avg >= 55:
-		return "thriving modern city, optimistic atmosphere"
+		return "pleasant sunny day, people walking with purpose, generally positive mood, clean and orderly"
 	case avg >= 45:
-		return "typical modern city, neutral atmosphere"
+		return "overcast day, neutral busy atmosphere, typical urban scene"
 	case avg >= 30:
-		return "struggling city, somewhat gloomy atmosphere"
+		return "gloomy gray light, people hurrying with heads down, tense uneasy mood, signs of neglect"
 	default:
-		return "dystopian cityscape, dark oppressive atmosphere, decline visible everywhere"
+		return "dark oppressive atmosphere, harsh shadows, people looking fearful or desperate, sense of decay and hopelessness"
 	}
 }

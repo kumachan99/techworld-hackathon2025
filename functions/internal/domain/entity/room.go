@@ -40,7 +40,8 @@ type VoteResult struct {
 	ActualEffects     map[string]int    `json:"actualEffects" firestore:"actualEffects"`
 	NewsFlash         string            `json:"newsFlash" firestore:"newsFlash"`
 	VoteDetails       map[string]string `json:"voteDetails" firestore:"voteDetails"`
-	CityImage         string            `json:"cityImage,omitempty" firestore:"-"` // Base64エンコードされた街の画像（Firestoreには保存しない）
+	CityImage         string            `json:"cityImage,omitempty" firestore:"-"`               // Base64エンコードされた街の画像（Firestoreには保存しない）
+	CityImageURL      string            `json:"cityImageUrl,omitempty" firestore:"cityImageUrl"` // GCSにアップロードされた画像のsigned URL
 }
 
 // NewRoom は新しい部屋を作成する
@@ -96,7 +97,7 @@ func (r *Room) NextTurn() {
 	r.Status = RoomStatusVoting
 	r.CurrentPolicyIDs = make([]string, 0)
 	r.Votes = make(map[string]string) // 投票リセット
-	r.LastResult = nil
+	// LastResult は次の投票結果が出るまで保持する
 }
 
 // AllPlayersVoted は全プレイヤーが投票したかを判定する

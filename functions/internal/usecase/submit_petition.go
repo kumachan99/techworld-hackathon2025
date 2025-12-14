@@ -104,6 +104,12 @@ func (uc *SubmitPetitionUseCase) Execute(ctx context.Context, input SubmitPetiti
 		return nil, err
 	}
 
+	// プレイヤーの陳情フラグを更新
+	player.IsPetitionUsed = true
+	if err := uc.playerRepo.Update(ctx, input.RoomID, input.PlayerID, player); err != nil {
+		return nil, err
+	}
+
 	if !result.Approved {
 		return &SubmitPetitionOutput{
 			Approved: false,
@@ -119,12 +125,6 @@ func (uc *SubmitPetitionUseCase) Execute(ctx context.Context, input SubmitPetiti
 
 	// 部屋を更新
 	if err := uc.roomRepo.Update(ctx, input.RoomID, room); err != nil {
-		return nil, err
-	}
-
-	// プレイヤーの陳情フラグを更新
-	player.IsPetitionUsed = true
-	if err := uc.playerRepo.Update(ctx, input.RoomID, input.PlayerID, player); err != nil {
 		return nil, err
 	}
 
